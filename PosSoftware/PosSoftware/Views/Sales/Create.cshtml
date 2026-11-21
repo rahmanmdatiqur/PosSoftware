@@ -429,7 +429,6 @@
 <script>
     let saleItems = [];
     let modalProductsCache = [];
-    let selectedBrandFilter = '';
 
     document.addEventListener('DOMContentLoaded', function () {
         loadModalProducts();
@@ -456,13 +455,9 @@
     }
 
     function openProductModal() {
-        const modalEl = document.getElementById('productModal');
-        const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+        const modal = new bootstrap.Modal(document.getElementById('productModal'));
         modal.show();
-        setTimeout(() => {
-            const searchInput = document.getElementById('modalProductSearch');
-            if (searchInput) searchInput.focus();
-        }, 400);
+        setTimeout(() => document.getElementById('modalProductSearch').focus(), 400);
     }
 
     function loadModalProducts() {
@@ -474,69 +469,17 @@
                     renderModalProducts(modalProductsCache);
                 }
             })
-            .catch(err => console.error('Error loading products for modal:', err));
-    }
-
-    function quickFilterBrand(brandName, btn) {
-        selectedBrandFilter = brandName || '';
-        document.querySelectorAll('#quickBrandPills .brand-pill').forEach(b => {
-            b.classList.remove('active');
-        });
-        if (btn) {
-            btn.classList.add('active');
-        }
-        filterModalProducts();
-    }
-
-    function clearModalSearch() {
-        const input = document.getElementById('modalProductSearch');
-        input.value = '';
-        input.focus();
-        filterModalProducts();
-    }
-
-    function resetModalFilters() {
-        document.getElementById('modalProductSearch').value = '';
-        document.getElementById('modalCategoryFilter').value = '';
-        selectedBrandFilter = '';
-        document.querySelectorAll('#quickBrandPills .brand-pill').forEach((b, idx) => {
-            b.classList.remove('active');
-            if (idx === 0) b.classList.add('active');
-        });
-        filterModalProducts();
+            .catch(err => console.error(err));
     }
 
     function filterModalProducts() {
-        const term = (document.getElementById('modalProductSearch').value || '').toLowerCase().trim();
+        const term = document.getElementById('modalProductSearch').value.toLowerCase().trim();
         const catId = document.getElementById('modalCategoryFilter').value;
 
         const filtered = modalProductsCache.filter(p => {
-            // 1. Quick brand filter pill
-            if (selectedBrandFilter) {
-                const b = selectedBrandFilter.toLowerCase();
-                const brandMatch = (p.Name && p.Name.toLowerCase().includes(b)) ||
-                                   (p.CategoryName && p.CategoryName.toLowerCase().includes(b));
-                if (!brandMatch) return false;
-            }
-
-            // 2. Category dropdown
-            if (catId && p.CategoryId.toString() !== catId) {
-                return false;
-            }
-
-            // 3. Search query across Name, SKU/Code, Generic, Barcode, Category
-            if (term) {
-                const inName = p.Name && p.Name.toLowerCase().includes(term);
-                const inCode = p.Code && p.Code.toLowerCase().includes(term);
-                const inGeneric = p.GenericName && p.GenericName.toLowerCase().includes(term);
-                const inBarcode = p.Barcode && p.Barcode.toLowerCase().includes(term);
-                const inCategory = p.CategoryName && p.CategoryName.toLowerCase().includes(term);
-                if (!inName && !inCode && !inGeneric && !inBarcode && !inCategory) {
-                    return false;
-                }
-            }
-
-            return true;
+            const matchesTerm = !term || p.Name.toLowerCase().includes(term) || (p.GenericName && p.GenericName.toLowerCase().includes(term)) || p.Code.toLowerCase().includes(term);
+            const matchesCat = !catId || p.CategoryId.toString() === catId;
+            return matchesTerm && matchesCat;
         });
 
         renderModalProducts(filtered);
@@ -544,46 +487,32 @@
 
     function renderModalProducts(list) {
         const tbody = document.getElementById('modalProductList');
-        const totalCount = modalProductsCache.length;
-        const countBadge = document.getElementById('modalProductCountBadge');
-        const footerInfo = document.getElementById('modalFooterInfo');
-
-        const currentCount = list ? list.length : 0;
-        if (countBadge) countBadge.innerText = `${currentCount} / ${totalCount} Products`;
-        if (footerInfo) footerInfo.innerText = `Showing ${currentCount} of ${totalCount} products in catalog`;
-
         if (!list || list.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="9" class="text-center py-4 text-muted"><i class="bi bi-info-circle me-1"></i> No products found matching your search.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="8" class="text-center py-3 text-muted">No products found matching criteria.</td></tr>';
             return;
         }
 
         tbody.innerHTML = list.map(p => `
-            <tr style="cursor: pointer;" onclick="selectProductById(${p.Id})">
-                <td class="text-center">
+            <tr onclick='selectProductFromModal(${JSON.stringify(p)})'>
+                <td>
                     <img src="${p.ImageUrl || '/uploads/products/pharma-item.svg'}" alt="${p.Name}" class="rounded border" style="width: 32px; height: 32px; object-fit: contain; background: #fff;" />
                 </td>
-                <td><span class="badge bg-light text-dark border font-monospace fw-bold">${p.Code}</span></td>
                 <td class="fw-semibold text-primary">${p.Name}</td>
                 <td class="text-muted small">${p.GenericName || '-'}</td>
-                <td><span class="badge bg-info bg-opacity-10 text-dark border" style="font-size:0.75rem;">${p.CategoryName || 'General'}</span></td>
-                <td class="text-center">${p.UnitName || 'PCS'}</td>
-                <td class="text-end fw-bold text-dark">৳ ${p.SalePrice.toFixed(2)}</td>
-                <td class="text-center">
+                <td><span class="badge bg-light text-dark border">${p.Code}</span></td>
+                <td>${p.UnitName}</td>
+                <td class="fw-bold">৳ ${p.SalePrice.toFixed(2)}</td>
+                <td class="text-end">
                     <span class="badge ${p.CurrentStock <= 5 ? 'bg-danger' : 'bg-success'}">${p.CurrentStock}</span>
                 </td>
-                <td class="text-center">
-                    <button type="button" class="btn btn-sm btn-primary py-0 px-2 shadow-sm" onclick="event.stopPropagation(); selectProductById(${p.Id});">
-                        <i class="bi bi-plus-lg"></i> Select
-                    </button>
+                <td>
+                    <button type="button" class="btn btn-sm btn-primary py-0 px-2">Select</button>
                 </td>
             </tr>
         `).join('');
     }
 
-    function selectProductById(id) {
-        const prod = modalProductsCache.find(x => x.Id === id);
-        if (!prod) return;
-
+    function selectProductFromModal(prod) {
         const existing = saleItems.find(x => x.ProductId === prod.Id);
         if (existing) {
             existing.Quantity += 1;
