@@ -26,8 +26,11 @@ namespace PosSoftware.Controllers
 
         [HttpGet]
         [AuthorizePermission("SalesOrders", "View")]
-        public async Task<IActionResult> Index(string? search, string? startDate, string? endDate, string? paymentMethod)
+        public async Task<IActionResult> Index(string? search, string? startDate, string? endDate, string? paymentMethod, int page = 1, int pageSize = 10)
         {
+            if (pageSize <= 0) pageSize = 10;
+            if (page <= 0) page = 1;
+
             var q = _context.Sales
                 .Include(s => s.Customer)
                 .Include(s => s.Cashier)
@@ -60,10 +63,23 @@ namespace PosSoftware.Controllers
                 ViewBag.EndDate = eDate.ToString("yyyy-MM-dd");
             }
 
+            int totalItems = await q.CountAsync();
+            int totalPages = (int)Math.Ceiling(totalItems / (double)pageSize);
+            if (totalPages <= 0) totalPages = 1;
+            if (page > totalPages) page = totalPages;
+
             ViewBag.Search = search;
             ViewBag.PaymentMethod = paymentMethod;
+            ViewBag.CurrentPage = page;
+            ViewBag.PageSize = pageSize;
+            ViewBag.TotalItems = totalItems;
+            ViewBag.TotalPages = totalPages;
 
-            var sales = await q.OrderByDescending(s => s.SaleDate).ThenByDescending(s => s.Id).Take(150).ToListAsync();
+            var sales = await q.OrderByDescending(s => s.SaleDate).ThenByDescending(s => s.Id)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
             return View(sales);
         }
 

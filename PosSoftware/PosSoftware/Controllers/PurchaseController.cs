@@ -23,8 +23,11 @@ namespace PosSoftware.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> Index(string? search)
+        public async Task<IActionResult> Index(string? search, int page = 1, int pageSize = 10)
         {
+            if (pageSize <= 0) pageSize = 10;
+            if (page <= 0) page = 1;
+
             var q = _context.Purchases
                 .Include(p => p.Supplier)
                 .Include(p => p.CreatedByUser)
@@ -39,8 +42,22 @@ namespace PosSoftware.Controllers
                               || (p.PurchaseOrderNo != null && p.PurchaseOrderNo.ToLower().Contains(term)));
             }
 
+            int totalItems = await q.CountAsync();
+            int totalPages = (int)Math.Ceiling(totalItems / (double)pageSize);
+            if (totalPages <= 0) totalPages = 1;
+            if (page > totalPages) page = totalPages;
+
             ViewBag.SearchTerm = search;
-            var purchases = await q.OrderByDescending(p => p.PurchaseDate).ThenByDescending(p => p.Id).ToListAsync();
+            ViewBag.CurrentPage = page;
+            ViewBag.PageSize = pageSize;
+            ViewBag.TotalItems = totalItems;
+            ViewBag.TotalPages = totalPages;
+
+            var purchases = await q.OrderByDescending(p => p.PurchaseDate).ThenByDescending(p => p.Id)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
             return View(purchases);
         }
 

@@ -22,8 +22,11 @@ namespace PosSoftware.Controllers
 
         [HttpGet]
         [AuthorizePermission("Products", "View")]
-        public async Task<IActionResult> Index(int? categoryId, string? search)
+        public async Task<IActionResult> Index(int? categoryId, string? search, int page = 1, int pageSize = 10)
         {
+            if (pageSize <= 0) pageSize = 10;
+            if (page <= 0) page = 1;
+
             var q = _context.Products
                 .Include(p => p.Category)
                 .Include(p => p.Unit)
@@ -44,10 +47,24 @@ namespace PosSoftware.Controllers
                               || p.SKU.ToLower().Contains(term));
             }
 
+            int totalItems = await q.CountAsync();
+            int totalPages = (int)Math.Ceiling(totalItems / (double)pageSize);
+            if (totalPages <= 0) totalPages = 1;
+            if (page > totalPages) page = totalPages;
+
             ViewBag.Categories = new SelectList(await _context.Categories.Where(c => c.IsActive).ToListAsync(), "Id", "Name", categoryId);
             ViewBag.SearchTerm = search;
+            ViewBag.SelectedCategoryId = categoryId;
+            ViewBag.CurrentPage = page;
+            ViewBag.PageSize = pageSize;
+            ViewBag.TotalItems = totalItems;
+            ViewBag.TotalPages = totalPages;
 
-            var products = await q.OrderBy(p => p.Name).ToListAsync();
+            var products = await q.OrderBy(p => p.Name)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
             return View(products);
         }
 

@@ -126,3 +126,4 @@ namespace PosSoftware.Services
         }
     }
 }
+
