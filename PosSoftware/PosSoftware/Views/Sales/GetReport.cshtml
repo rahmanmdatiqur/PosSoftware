@@ -100,11 +100,20 @@
             line-height: 1.35;
         }
         .header-meta {
-            text-align: right;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 20px;
             font-size: 9.5pt;
         }
         .barcode-box {
-            margin-bottom: 4px;
+            display: flex;
+            align-items: center;
+            margin-bottom: 0;
+        }
+        .meta-details {
+            text-align: right;
+            line-height: 1.45;
         }
         .invoice-title {
             text-align: center;
@@ -257,8 +266,10 @@
                 <div class="barcode-box">
                     @Html.Raw(ViewBag.BarcodeSvg)
                 </div>
-                <div><b>Bill No :</b> @Model.InvoiceNumber</div>
-                <div><b>Sale Date :</b> @Model.SaleDate.ToString("yyyy-MM-dd")</div>
+                <div class="meta-details">
+                    <div><b>Bill No :</b> @Model.InvoiceNumber</div>
+                    <div><b>Sale Date :</b> @Model.SaleDate.ToString("yyyy-MM-dd")</div>
+                </div>
             </div>
         </div>
 
