@@ -20,6 +20,7 @@ $RECYCLE.BIN/
 System Volume Information/
 *.tmp
 *.log
+*.winmd
 Thumbs.db
 desktop.ini
 
