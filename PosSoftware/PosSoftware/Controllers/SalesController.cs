@@ -246,6 +246,18 @@ namespace PosSoftware.Controllers
         }
 
         [HttpGet]
+        public async Task<IActionResult> OrderForm()
+        {
+            var products = await _context.Products
+                .Include(p => p.Category)
+                .Where(p => p.IsActive)
+                .OrderBy(p => p.SKU)
+                .ToListAsync();
+
+            return View(products);
+        }
+
+        [HttpGet]
         [AuthorizePermission("SalesOrders", "View")]
         public async Task<IActionResult> Details(int id)
         {

@@ -1,0 +1,339 @@
+@model List<PosSoftware.Models.Entities.Product>
+@{
+    Layout = null;
+    var leftItems = Model.Where(p => {
+        if (p.SKU.StartsWith("ASM-") && int.TryParse(p.SKU.Substring(4), out int sl)) {
+            return sl <= 90;
+        }
+        return false;
+    }).OrderBy(p => p.SKU).ToList();
+
+    var rightItems = Model.Where(p => {
+        if (p.SKU.StartsWith("ASM-") && int.TryParse(p.SKU.Substring(4), out int sl)) {
+            return sl > 90 && sl <= 170;
+        }
+        return false;
+    }).OrderBy(p => p.SKU).ToList();
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ASM ENTERPRISE - Order Form</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" />
+    <style>
+        @@page {
+            size: A4 portrait;
+            margin: 6mm 8mm;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-size: 8pt;
+            color: #000;
+            background: #f1f5f9;
+            margin: 0;
+            padding: 15px;
+        }
+        .no-print-bar {
+            max-width: 210mm;
+            margin: 0 auto 12px auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .order-sheet {
+            max-width: 210mm;
+            margin: 0 auto;
+            background: #fff;
+            padding: 12mm 10mm;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            border: 1px solid #cbd5e1;
+        }
+        .company-header {
+            text-align: center;
+            margin-bottom: 8px;
+        }
+        .company-name {
+            font-size: 18pt;
+            font-weight: 900;
+            color: #004085;
+            letter-spacing: 0.5px;
+            margin: 0;
+            text-transform: uppercase;
+        }
+        .company-address {
+            font-size: 8.5pt;
+            font-weight: 600;
+            color: #333;
+            margin-top: 2px;
+        }
+        .order-badge {
+            display: inline-block;
+            background: #004085;
+            color: #fff;
+            font-size: 9pt;
+            font-weight: bold;
+            padding: 2px 18px;
+            border-radius: 12px;
+            margin-top: 4px;
+            letter-spacing: 0.5px;
+        }
+        .customer-meta {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 8px;
+            margin-bottom: 6px;
+            font-size: 8pt;
+            line-height: 1.6;
+        }
+        .meta-left {
+            flex: 1;
+        }
+        .meta-right {
+            width: 140px;
+            text-align: right;
+        }
+        .dots {
+            border-bottom: 1px dotted #555;
+            display: inline-block;
+            min-width: 180px;
+        }
+        .columns-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 6px;
+        }
+        .order-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 6.8pt;
+        }
+        .order-table th, .order-table td {
+            border: 1px solid #444;
+            padding: 1.5px 3px;
+            vertical-align: middle;
+        }
+        .order-table th {
+            background: #f8fafc;
+            font-weight: bold;
+            text-align: center;
+            font-size: 6.8pt;
+        }
+        .cat-heading-row td {
+            background: #e2e8f0;
+            font-weight: bold;
+            text-align: center;
+            font-size: 7.2pt;
+            color: #0f172a;
+            letter-spacing: 0.3px;
+            padding: 2px;
+        }
+        .col-sl { width: 22px; text-align: center; font-weight: bold; }
+        .col-name { text-align: left; }
+        .col-price { width: 34px; text-align: right; }
+        .col-qty { width: 28px; text-align: center; }
+        .col-val { width: 38px; text-align: right; }
+        
+        .qty-input {
+            width: 100%;
+            border: none;
+            background: transparent;
+            text-align: center;
+            font-size: 6.8pt;
+            padding: 0;
+            margin: 0;
+            font-weight: bold;
+        }
+        .qty-input:focus {
+            outline: 1px solid #004085;
+            background: #e0f2fe;
+        }
+
+        .signatures-row {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 25px;
+            padding: 0 10px;
+        }
+        .sig-block {
+            width: 120px;
+            text-align: center;
+            border-top: 1px solid #333;
+            padding-top: 3px;
+            font-size: 8pt;
+            font-weight: bold;
+            color: #222;
+        }
+
+        @@media print {
+            body {
+                background: #fff;
+                padding: 0;
+            }
+            .no-print-bar {
+                display: none !important;
+            }
+            .order-sheet {
+                border: none;
+                box-shadow: none;
+                padding: 0;
+                max-width: 100%;
+            }
+            .qty-input {
+                outline: none;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="no-print-bar">
+        <a href="@Url.Action("Index", "Sales")" class="btn btn-sm btn-outline-secondary">
+            &larr; Back to Sales
+        </a>
+        <div class="d-flex gap-2">
+            <button onclick="window.print()" class="btn btn-sm btn-primary">
+                🖨️ Print Order Form
+            </button>
+            <button onclick="clearQuantities()" class="btn btn-sm btn-outline-danger">
+                Reset Quantities
+            </button>
+        </div>
+    </div>
+
+    <div class="order-sheet">
+        <!-- Header -->
+        <div class="company-header">
+            <h1 class="company-name">ASM ENTERPRISE</h1>
+            <div class="company-address">Motlab Tower, Chowk Bazar, Dhaka-1211.</div>
+            <div class="order-badge">Order Form</div>
+        </div>
+
+        <!-- Customer Metadata -->
+        <div class="customer-meta">
+            <div class="meta-left">
+                <div>Name : <span class="dots" style="min-width: 250px;">&nbsp;</span></div>
+                <div>Address : <span class="dots" style="min-width: 240px;">&nbsp;</span></div>
+                <div>Mobile : <span class="dots" style="min-width: 180px;">&nbsp;</span></div>
+            </div>
+            <div class="meta-right">
+                <div>Date : <span class="dots" style="min-width: 90px;">@DateTime.Now.ToString("dd/MM/yyyy")</span></div>
+            </div>
+        </div>
+
+        <!-- 2-Column Tables -->
+        <div class="columns-container">
+            <!-- Left Column: Items 1 to 90 -->
+            <div>
+                <table class="order-table">
+                    <thead>
+                        <tr>
+                            <th class="col-sl">Sl. No.</th>
+                            <th class="col-name">Item Name</th>
+                            <th class="col-price">T. Price</th>
+                            <th class="col-qty">Qty.</th>
+                            <th class="col-val">Value</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @{
+                            string currentCatLeft = "";
+                            foreach (var item in leftItems)
+                            {
+                                int.TryParse(item.SKU.Replace("ASM-", ""), out int slNo);
+                                var cat = item.Category?.Name ?? "General";
+                                if (cat != currentCatLeft)
+                                {
+                                    currentCatLeft = cat;
+                                    <tr class="cat-heading-row">
+                                        <td colspan="5">@currentCatLeft</td>
+                                    </tr>
+                                }
+                                <tr>
+                                    <td class="col-sl">@slNo</td>
+                                    <td class="col-name">@item.Name</td>
+                                    <td class="col-price" data-price="@item.CostPrice">@item.CostPrice.ToString("0.##")</td>
+                                    <td class="col-qty">
+                                        <input type="text" class="qty-input" data-sl="@slNo" oninput="calculateRow(this)" />
+                                    </td>
+                                    <td class="col-val row-val" id="val-@slNo"></td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Right Column: Items 91 to 170 -->
+            <div>
+                <table class="order-table">
+                    <thead>
+                        <tr>
+                            <th class="col-sl">Sl. No.</th>
+                            <th class="col-name">Item Name</th>
+                            <th class="col-price">T. Price</th>
+                            <th class="col-qty">Qty.</th>
+                            <th class="col-val">Value</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @{
+                            string currentCatRight = "";
+                            foreach (var item in rightItems)
+                            {
+                                int.TryParse(item.SKU.Replace("ASM-", ""), out int slNo);
+                                var cat = item.Category?.Name ?? "General";
+                                if (cat != currentCatRight)
+                                {
+                                    currentCatRight = cat;
+                                    <tr class="cat-heading-row">
+                                        <td colspan="5">@currentCatRight</td>
+                                    </tr>
+                                }
+                                <tr>
+                                    <td class="col-sl">@slNo</td>
+                                    <td class="col-name">@item.Name</td>
+                                    <td class="col-price" data-price="@item.CostPrice">@item.CostPrice.ToString("0.##")</td>
+                                    <td class="col-qty">
+                                        <input type="text" class="qty-input" data-sl="@slNo" oninput="calculateRow(this)" />
+                                    </td>
+                                    <td class="col-val row-val" id="val-@slNo"></td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Four Signatures matching Screenshot -->
+        <div class="signatures-row">
+            <div class="sig-block">Order by</div>
+            <div class="sig-block">Sales Officer</div>
+            <div class="sig-block">Delivered by</div>
+            <div class="sig-block">Received by</div>
+        </div>
+    </div>
+
+    <script>
+        function calculateRow(input) {
+            const row = input.closest('tr');
+            const priceCell = row.querySelector('.col-price');
+            const valCell = row.querySelector('.col-val');
+            const price = parseFloat(priceCell.getAttribute('data-price')) || 0;
+            const qty = parseFloat(input.value) || 0;
+            if (qty > 0) {
+                valCell.innerText = (price * qty).toFixed(2);
+            } else {
+                valCell.innerText = '';
+            }
+        }
+
+        function clearQuantities() {
+            document.querySelectorAll('.qty-input').forEach(i => i.value = '');
+            document.querySelectorAll('.row-val').forEach(v => v.innerText = '');
+        }
+    </script>
+</body>
+</html>

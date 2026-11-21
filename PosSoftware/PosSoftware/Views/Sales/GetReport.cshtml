@@ -240,17 +240,15 @@
         <!-- Top Header matching Screenshot 6 & 7 -->
         <div class="report-header">
             <div class="company-info">
-                <svg class="company-logo" viewBox="0 0 100 100">
-                    <circle cx="50" cy="50" r="46" fill="#ffffff" stroke="#00529b" stroke-width="5"/>
-                    <circle cx="50" cy="50" r="40" fill="none" stroke="#00529b" stroke-width="2"/>
-                    <path d="M25 52 L35 52 L42 32 L50 68 L58 42 L65 52 L75 52" fill="none" stroke="#00529b" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
+                <div style="width: 50px; height: 50px; background: #004085; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 900; font-size: 1.3rem; flex-shrink: 0; box-shadow: 0 2px 6px rgba(0,64,133,0.3);">
+                    ASM
+                </div>
                 <div>
-                    <div class="company-title">Willows Health Centre</div>
-                    <div class="company-sub">WILLOWS HEALTH CENTRE - PRIMARY HEALTH CARE CENTRE</div>
+                    <div class="company-title">ASM ENTERPRISE</div>
+                    <div class="company-sub">WHOLESALE & RETAIL SUPPLIER</div>
                     <div class="company-address">
-                        Jafrabad, Lalabazar, South Surma, Sylhet.<br />
-                        willowshealthcentre.wbsbd@gmail.com
+                        Motlab Tower, Chowk Bazar, Dhaka-1211.<br />
+                        Phone / Mobile: Motlab Tower, Chowk Bazar, Dhaka
                     </div>
                 </div>
             </div>
@@ -340,14 +338,15 @@
             Amount Received in words : @ViewBag.AmountInWords
         </div>
 
-        <!-- Three Signature Lines matching Screenshot -->
+        <!-- Four Signature Lines matching ASM Enterprise Order Form -->
         <div class="signatures-row">
-            <div class="sig-block">Prepared By</div>
-            <div class="sig-block">Received By</div>
-            <div class="sig-block">Authorized By</div>
+            <div class="sig-block">Order by</div>
+            <div class="sig-block">Sales Officer</div>
+            <div class="sig-block">Delivered by</div>
+            <div class="sig-block">Received by</div>
         </div>
 
-        <!-- Footer matching Screenshot 6 & 7 -->
+        <!-- Footer matching ASM Enterprise -->
         <div class="report-footer">
             <div>
                 Printed Date : @DateTime.Now.ToString("MM/dd/yyyy, h:mm:ss tt")
@@ -367,12 +366,12 @@
             </div>
 
             <div style="text-align: right;">
-                Print By : @(Model.Cashier?.Username ?? "Erp")<br />
-                Managed by Wellbeing Bangladesh Society (WBS)
+                Print By : @(Model.Cashier?.Username ?? "Admin")<br />
+                <b>ASM ENTERPRISE</b> - Dhaka
             </div>
         </div>
-        <div style="text-align: center; font-size: 7pt; color: #00529b; margin-top: 6px;">
-            🌐 www.wbs-bd.org &nbsp;|&nbsp; Facebook &nbsp;|&nbsp; YouTube
+        <div style="text-align: center; font-size: 7pt; color: #004085; margin-top: 6px;">
+            Motlab Tower, Chowk Bazar, Dhaka-1211.
         </div>
     </div>
 </body>

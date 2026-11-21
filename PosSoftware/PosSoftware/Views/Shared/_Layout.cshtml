@@ -277,15 +277,13 @@
         <div id="wrapper">
             <!-- Sidebar -->
             <nav id="sidebar-wrapper" class="d-flex flex-column">
-                <!-- Brand / Logo matching Screenshot -->
-                <div class="sidebar-brand">
-                    <svg width="48" height="48" viewBox="0 0 100 100" style="margin: 0 auto; display: block;">
-                        <circle cx="50" cy="50" r="46" fill="#ffffff" stroke="#00529b" stroke-width="6"/>
-                        <circle cx="50" cy="50" r="40" fill="none" stroke="#00529b" stroke-width="2"/>
-                        <path d="M25 52 L35 52 L42 32 L50 68 L58 42 L65 52 L75 52" fill="none" stroke="#00529b" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>
-                    <div class="sidebar-brand-title">WILLOWS HEALTH CENTRE</div>
-                    <div class="sidebar-brand-sub">Primary Health Care Centre</div>
+                <!-- Brand / Logo matching ASM Enterprise -->
+                <div class="sidebar-brand text-center py-3">
+                    <div style="width: 48px; height: 48px; margin: 0 auto; background: linear-gradient(135deg, #0284c7, #0369a1); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 1.3rem; color: #fff; box-shadow: 0 4px 12px rgba(2,132,199,0.4); border: 2px solid rgba(255,255,255,0.2);">
+                        ASM
+                    </div>
+                    <div class="sidebar-brand-title mt-2" style="font-weight: 800; font-size: 1rem; letter-spacing: 0.5px;">ASM ENTERPRISE</div>
+                    <div class="sidebar-brand-sub" style="font-size: 0.72rem; opacity: 0.85;">Motlab Tower, Chowk Bazar, Dhaka</div>
                 </div>
 
                 <!-- Navigation List -->
@@ -299,8 +297,8 @@
                             </a>
                         </li>
 
-                        <!-- Pharmacy (POS & Purchase) Section -->
-                        <li class="menu-header">PHARMACY MODULE</li>
+                        <!-- Sales & Purchase Section -->
+                        <li class="menu-header">SALES & PURCHASE</li>
 
                         <li class="nav-item">
                             <a href="@Url.Action("Index", "Sales")" class="nav-link @(currentController == "Sales" && currentAction == "Index" ? "active" : "")">
@@ -313,6 +311,13 @@
                             <a href="@Url.Action("Create", "Sales")" class="nav-link @(currentController == "Sales" && currentAction == "Create" ? "active" : "")">
                                 <i class="bi bi-cart-plus text-success"></i>
                                 <span>Sale Entry</span>
+                            </a>
+                        </li>
+
+                        <li class="nav-item">
+                            <a href="@Url.Action("OrderForm", "Sales")" class="nav-link @(currentController == "Sales" && currentAction == "OrderForm" ? "active" : "")">
+                                <i class="bi bi-file-earmark-spreadsheet text-info"></i>
+                                <span>Order Form</span>
                             </a>
                         </li>
 
@@ -349,8 +354,8 @@
 
                         <li class="nav-item">
                             <a href="@Url.Action("Index", "Product")" class="nav-link @(currentController == "Product" ? "active" : "")">
-                                <i class="bi bi-capsule text-success"></i>
-                                <span>Products (Medicine)</span>
+                                <i class="bi bi-box-seam text-success"></i>
+                                <span>Products (Catalog)</span>
                             </a>
                         </li>
 
@@ -422,10 +427,10 @@
                         <button class="btn btn-sm btn-light border" id="sidebarToggle" title="Toggle Sidebar">
                             <i class="bi bi-list fs-5"></i>
                         </button>
-                        <a href="javascript:void(0)" class="nav-link-btn" onclick="alert('Current Branch: Main Branch (Willows Health Centre)')">
+                        <a href="javascript:void(0)" class="nav-link-btn" onclick="alert('Current Branch: Main Branch (ASM ENTERPRISE - Motlab Tower, Chowk Bazar, Dhaka)')">
                             <i class="bi bi-building"></i> Change Branch
                         </a>
-                        <a href="javascript:void(0)" class="nav-link-btn" onclick="alert('SmartPOS & Pharmacy ERP User Manual: Use Sales for dispensing, Purchase for inventory stock-in, and Products to upload images.')">
+                        <a href="javascript:void(0)" class="nav-link-btn" onclick="alert('ASM ENTERPRISE System: Sales, Purchase, Products & 170-item Order Form catalog.')">
                             <i class="bi bi-question-circle"></i> User Manual
                         </a>
                     </div>
