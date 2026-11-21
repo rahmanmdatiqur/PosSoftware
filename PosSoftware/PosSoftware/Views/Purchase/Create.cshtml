@@ -210,7 +210,12 @@
                 <div class="row g-2 align-items-center mb-2">
                     <div class="col-5 fw-semibold small">Paid Amount</div>
                     <div class="col-7">
-                        <input type="number" id="calcPaid" class="form-control form-control-sm text-end" value="0.00" oninput="calculateTotals()" />
+                        <div class="input-group input-group-sm">
+                            <input type="number" step="0.01" id="calcPaid" class="form-control text-end fw-semibold" value="0.00" oninput="onPaidInput()" />
+                            <button type="button" class="btn btn-outline-success" onclick="resetPurchasePaidToFull()" title="Set Full Paid (0 Due)">
+                                <i class="bi bi-check2-circle"></i> Full
+                            </button>
+                        </div>
                     </div>
                 </div>
 
@@ -502,24 +507,47 @@
         bootstrap.Modal.getInstance(document.getElementById('productModal'))?.hide();
     }
 
-    function onQtyChange(index, val) {
-        const qty = parseInt(val) || 1;
-        purchaseItems[index].Quantity = qty > 0 ? qty : 1;
-        purchaseItems[index].TotalAmount = purchaseItems[index].Quantity * purchaseItems[index].PurchasePrice;
-        renderPurchaseItems();
+    function onQtyChange(index, inputEl) {
+        const qty = parseFloat(inputEl.value) || 0;
+        purchaseItems[index].Quantity = qty;
+        purchaseItems[index].TotalAmount = qty * purchaseItems[index].PurchasePrice;
+        
+        const rowTotalEl = document.getElementById('rowTotal_' + index);
+        if (rowTotalEl) {
+            rowTotalEl.innerText = purchaseItems[index].TotalAmount.toFixed(2);
+        }
+        updatePurchaseTableTotals();
         calculateTotals();
     }
 
-    function onPriceChange(index, val) {
-        const price = parseFloat(val) || 0;
-        purchaseItems[index].PurchasePrice = price >= 0 ? price : 0;
-        purchaseItems[index].TotalAmount = purchaseItems[index].Quantity * purchaseItems[index].PurchasePrice;
-        renderPurchaseItems();
+    function onPriceChange(index, inputEl) {
+        const price = parseFloat(inputEl.value) || 0;
+        purchaseItems[index].PurchasePrice = price;
+        purchaseItems[index].TotalAmount = purchaseItems[index].Quantity * price;
+        
+        const rowTotalEl = document.getElementById('rowTotal_' + index);
+        if (rowTotalEl) {
+            rowTotalEl.innerText = purchaseItems[index].TotalAmount.toFixed(2);
+        }
+        updatePurchaseTableTotals();
         calculateTotals();
+    }
+
+    function updatePurchaseTableTotals() {
+        const totalQty = purchaseItems.reduce((acc, x) => acc + (parseFloat(x.Quantity) || 0), 0);
+        const totalAmount = purchaseItems.reduce((acc, x) => acc + (parseFloat(x.TotalAmount) || 0), 0);
+
+        const totalQtyEl = document.getElementById('tableTotalQty');
+        const totalAmountEl = document.getElementById('tableTotalAmount');
+        if (totalQtyEl) totalQtyEl.innerText = totalQty;
+        if (totalAmountEl) totalAmountEl.innerText = totalAmount.toFixed(2);
     }
 
     function removeItem(index) {
         purchaseItems.splice(index, 1);
+        if (purchaseItems.length === 0) {
+            isPurchasePaidManuallyEdited = false;
+        }
         renderPurchaseItems();
         calculateTotals();
     }
@@ -542,12 +570,16 @@
                 <td class="fw-semibold">${item.ProductName}</td>
                 <td><span class="badge bg-light text-dark border">${item.ProductCode}</span></td>
                 <td class="text-center">
-                    <input type="number" class="form-control form-control-sm py-0 text-center d-inline-block" value="${item.Quantity}" min="1" oninput="onQtyChange(${idx}, this.value)" style="width:70px;" />
+                    <input type="number" class="form-control form-control-sm py-0 text-center d-inline-block" 
+                           value="${item.Quantity}" min="0" step="any"
+                           oninput="onQtyChange(${idx}, this)" style="width:75px;" />
                 </td>
                 <td class="text-end">
-                    <input type="number" step="0.01" class="form-control form-control-sm py-0 text-end d-inline-block" value="${item.PurchasePrice.toFixed(2)}" oninput="onPriceChange(${idx}, this.value)" style="width:90px;" />
+                    <input type="number" step="0.01" class="form-control form-control-sm py-0 text-end d-inline-block" 
+                           value="${item.PurchasePrice}" 
+                           oninput="onPriceChange(${idx}, this)" style="width:95px;" />
                 </td>
-                <td class="text-end fw-bold text-primary">${item.TotalAmount.toFixed(2)}</td>
+                <td class="text-end fw-bold text-primary" id="rowTotal_${idx}">${item.TotalAmount.toFixed(2)}</td>
                 <td class="text-center">
                     <button type="button" class="btn btn-sm btn-outline-danger p-0 px-1" onclick="removeItem(${idx})">
                         <i class="bi bi-trash"></i>
@@ -556,14 +588,22 @@
             </tr>
         `).join('');
 
-        const totalQty = purchaseItems.reduce((acc, x) => acc + x.Quantity, 0);
-        const totalAmount = purchaseItems.reduce((acc, x) => acc + x.TotalAmount, 0);
-
-        document.getElementById('tableTotalQty').innerText = totalQty;
-        document.getElementById('tableTotalAmount').innerText = totalAmount.toFixed(2);
+        updatePurchaseTableTotals();
     }
 
-    function calculateTotals() {
+    let isPurchasePaidManuallyEdited = false;
+
+    function onPaidInput() {
+        isPurchasePaidManuallyEdited = true;
+        calculateTotals(true);
+    }
+
+    function resetPurchasePaidToFull() {
+        isPurchasePaidManuallyEdited = false;
+        calculateTotals(false);
+    }
+
+    function calculateTotals(fromPaidInput = false) {
         const sub = purchaseItems.reduce((acc, x) => acc + x.TotalAmount, 0);
         document.getElementById('calcSubTotal').value = sub.toFixed(2);
 
@@ -571,7 +611,14 @@
         const total = Math.max(0, sub - discount);
         document.getElementById('calcTotal').value = total.toFixed(2);
 
-        const paid = parseFloat(document.getElementById('calcPaid').value) || 0;
+        let paid;
+        if (!fromPaidInput && !isPurchasePaidManuallyEdited) {
+            paid = total;
+            document.getElementById('calcPaid').value = paid.toFixed(2);
+        } else {
+            paid = parseFloat(document.getElementById('calcPaid').value) || 0;
+        }
+
         const due = Math.max(0, total - paid);
         document.getElementById('calcDue').value = due.toFixed(2);
     }

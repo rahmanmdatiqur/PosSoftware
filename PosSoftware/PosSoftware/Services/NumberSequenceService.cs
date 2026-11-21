@@ -27,7 +27,7 @@ namespace PosSoftware.Services
                 .Select(s => s.InvoiceNumber)
                 .ToListAsync();
 
-            int maxNum = 224; // Baseline starting number
+            int maxNum = 0; // Starts from beginning (0) -> First invoice is INV-00001
             var regex = new Regex(@"\b(?:INV-)?(\d+)\b", RegexOptions.IgnoreCase);
 
             foreach (var inv in invoiceNumbers)
@@ -53,7 +53,7 @@ namespace PosSoftware.Services
                 .Select(p => p.PurchaseNo)
                 .ToListAsync();
 
-            int maxNum = 37; // Baseline starting number
+            int maxNum = 0; // Starts from beginning (0) -> First purchase is PUR-00001
             var regex = new Regex(@"\b(?:PUR-)?(\d+)\b", RegexOptions.IgnoreCase);
 
             foreach (var pno in purchaseNumbers)
@@ -106,7 +106,7 @@ namespace PosSoftware.Services
                 .Select(p => p.PurchaseOrderNo!)
                 .ToListAsync();
 
-            int maxNum = 37;
+            int maxNum = 0; // Starts from beginning (0) -> First PO is PO-YYYY-0001
             var regex = new Regex(@"\b(?:PO-\d{4}-)?(\d+)\b", RegexOptions.IgnoreCase);
 
             foreach (var po in poNumbers)
