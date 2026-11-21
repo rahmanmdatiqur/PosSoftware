@@ -16,11 +16,13 @@ namespace PosSoftware.Controllers
     {
         private readonly ApplicationDbContext _context;
         private readonly IInventoryService _inventoryService;
+        private readonly INumberSequenceService _sequenceService;
 
-        public PosController(ApplicationDbContext context, IInventoryService inventoryService)
+        public PosController(ApplicationDbContext context, IInventoryService inventoryService, INumberSequenceService sequenceService)
         {
             _context = context;
             _inventoryService = inventoryService;
+            _sequenceService = sequenceService;
         }
 
         [HttpGet]
@@ -35,7 +37,9 @@ namespace PosSoftware.Controllers
                 .Include(p => p.Category)
                 .Include(p => p.Unit)
                 .Where(p => p.IsActive)
-                .OrderBy(p => p.Name)
+                .OrderBy(p => p.SKU.StartsWith("ASM-") ? 0 : 1)
+                .ThenBy(p => p.SKU)
+                .ThenBy(p => p.Name)
                 .ToListAsync();
 
             var customers = await _context.Customers
@@ -43,9 +47,7 @@ namespace PosSoftware.Controllers
                 .OrderBy(c => c.Id)
                 .ToListAsync();
 
-            var todayStr = DateTime.UtcNow.ToString("yyyyMMdd");
-            var countToday = await _context.Sales.CountAsync(s => s.SaleDate.Date == DateTime.UtcNow.Date);
-            var nextInvoice = $"INV-{todayStr}-{(countToday + 1):D4}";
+            var nextInvoice = await _sequenceService.GetNextInvoiceNumberAsync();
 
             var model = new PosTerminalViewModel
             {
@@ -158,9 +160,8 @@ namespace PosSoftware.Controllers
                 }
             }
 
-            var todayStr = DateTime.UtcNow.ToString("yyyyMMdd");
-            var countToday = await _context.Sales.CountAsync(s => s.SaleDate.Date == DateTime.UtcNow.Date);
-            var invoiceNumber = $"INV-{todayStr}-{(countToday + 1):D4}";
+            var invoiceNumber = await _sequenceService.GetNextInvoiceNumberAsync();
+            var nextSo = await _sequenceService.GetNextSaleOrderNumberAsync();
 
             int cashierId = 1;
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
@@ -169,32 +170,43 @@ namespace PosSoftware.Controllers
                 cashierId = uid;
             }
 
+            decimal effectivePaid = dto.PaidAmount > 0 ? dto.PaidAmount : dto.GrandTotal;
+            decimal dues = Math.Max(0, dto.GrandTotal - effectivePaid);
+
             var sale = new Sale
             {
                 InvoiceNumber = invoiceNumber,
                 SaleDate = DateTime.UtcNow,
-                CustomerId = dto.CustomerId,
+                CustomerId = dto.CustomerId > 0 ? dto.CustomerId : 1,
+                CustomerType = "Walk-in",
+                SaleOrderNo = nextSo,
+                FundType = dto.PaymentMethod ?? "Cash",
                 SubTotal = dto.SubTotal,
                 TaxRate = dto.TaxRate,
                 TaxAmount = dto.TaxAmount,
                 DiscountPercent = dto.DiscountPercent,
                 DiscountAmount = dto.DiscountAmount,
+                FinalPayable = dto.GrandTotal,
                 GrandTotal = dto.GrandTotal,
-                PaidAmount = dto.PaidAmount,
+                PaidAmount = effectivePaid,
+                DuesAmount = dues,
                 ChangeAmount = dto.ChangeAmount,
-                PaymentMethod = dto.PaymentMethod,
+                PaymentMethod = dto.PaymentMethod ?? "Cash",
                 Status = "Completed",
+                IsPosted = true,
                 Notes = dto.Notes,
                 CashierId = cashierId
             };
 
             foreach (var item in dto.Items)
             {
+                var product = await _context.Products.FindAsync(item.ProductId);
+                decimal cost = item.CostPrice > 0 ? item.CostPrice : (product?.CostPrice ?? 0);
                 sale.SaleItems.Add(new SaleItem
                 {
                     ProductId = item.ProductId,
                     ProductName = item.Name,
-                    CostPrice = item.CostPrice,
+                    CostPrice = cost,
                     UnitPrice = item.UnitPrice,
                     Quantity = item.Quantity,
                     SubTotal = item.UnitPrice * item.Quantity,

@@ -7,7 +7,7 @@
     <!-- Left Pane: Product Catalog & Fast Barcode Search -->
     <div class="pos-catalog-pane d-flex flex-column">
         <!-- Search & Barcode Bar -->
-        <div class="card border-0 shadow-sm p-3 mb-3 bg-white rounded-3">
+        <div class="card border-0 shadow-sm p-3 mb-2 bg-white rounded-3">
             <div class="row g-2 align-items-center">
                 <div class="col-md-5">
                     <div class="input-group">
@@ -43,31 +43,54 @@
             </div>
         </div>
 
+        <!-- Requirement 2: Left-side Active Selection Summary Bar -->
+        <div id="leftSelectedSummaryBar" class="alert alert-primary py-2 px-3 mb-2 d-none align-items-center justify-content-between rounded-3 border-primary shadow-sm">
+            <div class="d-flex align-items-center gap-2">
+                <span class="badge bg-primary fs-6"><i class="bi bi-cart-check"></i></span>
+                <div>
+                    <strong class="text-primary">Selected Items: </strong>
+                    <span id="leftSelItemCount" class="fw-bold text-dark">0 items</span>
+                    <span class="text-muted mx-1">&bull;</span>
+                    <span class="text-muted">Total Qty: </span>
+                    <span id="leftSelTotalQty" class="fw-bold text-dark">0 pcs</span>
+                </div>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+                <span class="text-muted small">Total:</span>
+                <span id="leftSelTotalAmt" class="fs-5 fw-extrabold text-primary">৳ 0.00</span>
+            </div>
+        </div>
+
         <!-- Product Cards Grid -->
         <div class="flex-grow-1 overflow-auto pe-1">
             <div class="row row-cols-2 row-cols-sm-3 row-cols-md-4 row-cols-xl-5 g-3" id="posProductGrid">
                 @foreach (var prod in Model.Products)
                 {
                     <div class="col pos-product-item" 
+                         id="posProductCol_@prod.Id"
                          data-id="@prod.Id" 
                          data-name="@prod.Name" 
                          data-barcode="@prod.Barcode" 
                          data-sku="@prod.SKU" 
                          data-category-id="@prod.CategoryId">
-                        <div class="product-card shadow-sm" onclick='addToCart(@Html.Raw(System.Text.Json.JsonSerializer.Serialize(new {
-                            id = prod.Id,
-                            name = prod.Name,
-                            barcode = prod.Barcode,
-                            sellingPrice = prod.SellingPrice,
-                            costPrice = prod.CostPrice,
-                            currentStock = prod.CurrentStock
-                        })))'>
+                        <div class="product-card shadow-sm position-relative" 
+                             id="posProductCard_@prod.Id"
+                             onclick='addToCart(@Html.Raw(System.Text.Json.JsonSerializer.Serialize(new {
+                                 id = prod.Id,
+                                 name = prod.Name,
+                                 barcode = prod.Barcode,
+                                 sku = prod.SKU,
+                                 sellingPrice = prod.SellingPrice,
+                                 costPrice = prod.CostPrice,
+                                 currentStock = prod.CurrentStock,
+                                 unitName = prod.Unit?.ShortCode ?? "pcs"
+                             })))'>
                             <div>
                                 <div class="d-flex justify-content-between align-items-start mb-2">
                                     <span class="badge @(prod.CurrentStock <= prod.MinAlertStock ? "bg-danger" : "bg-success") stock-badge">
                                         @prod.CurrentStock @(prod.Unit?.ShortCode ?? "pcs")
                                     </span>
-                                    <span class="text-muted" style="font-size: 0.72rem;">@prod.SKU</span>
+                                    <span class="text-muted fw-bold" style="font-size: 0.72rem;">@prod.SKU</span>
                                 </div>
                                 <div class="text-center my-1">
                                     <img src="@(string.IsNullOrEmpty(prod.ImageUrl) ? "/uploads/products/pharma-item.svg" : prod.ImageUrl)" alt="@prod.Name" style="height: 48px; max-width: 100%; object-fit: contain;" />
@@ -76,11 +99,18 @@
                                 <span class="text-muted" style="font-size: 0.75rem;">@prod.Category?.Name</span>
                             </div>
                             
-                            <div class="d-flex justify-content-between align-items-center mt-3 pt-2 border-top">
-                                <span class="fw-extrabold text-primary fs-6">$@prod.SellingPrice.ToString("N2")</span>
-                                <span class="btn btn-sm btn-light border p-1 rounded-circle">
-                                    <i class="bi bi-plus text-primary fw-bold"></i>
-                                </span>
+                            <div class="mt-2 pt-2 border-top">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <span class="fw-extrabold text-primary fs-6">৳ @prod.SellingPrice.ToString("N2")</span>
+                                    <span class="btn btn-sm btn-light border p-1 rounded-circle">
+                                        <i class="bi bi-plus text-primary fw-bold"></i>
+                                    </span>
+                                </div>
+                                <!-- Requirement 2: Left-side selected product total qty and total amount -->
+                                <div id="cardSelectedBadge_@prod.Id" class="card-selected-indicator d-none mt-2 px-2 py-1 bg-primary text-white rounded text-center small fw-bold shadow-sm">
+                                    <i class="bi bi-check-circle-fill me-1"></i>
+                                    <span id="cardSelectedQty_@prod.Id">0</span> @(prod.Unit?.ShortCode ?? "pcs") &bull; ৳<span id="cardSelectedAmt_@prod.Id">0.00</span>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -119,20 +149,21 @@
             </div>
         </div>
 
-        <!-- Cart Items Table -->
+        <!-- Requirement 1: Cart Items Table with Editable Qty and Price -->
         <div class="flex-grow-1 overflow-auto p-2">
-            <table class="table table-sm cart-table mb-0">
+            <table class="table table-sm cart-table mb-0 align-middle">
                 <thead>
                     <tr>
                         <th>Item</th>
-                        <th class="text-center" style="width: 80px;">Qty</th>
-                        <th class="text-end" style="width: 70px;">Total</th>
+                        <th class="text-center" style="width: 95px;">Qty</th>
+                        <th class="text-end" style="width: 90px;">Price (৳)</th>
+                        <th class="text-end" style="width: 85px;">Total</th>
                         <th style="width: 30px;"></th>
                     </tr>
                 </thead>
                 <tbody id="cartTableBody">
                     <tr>
-                        <td colspan="4" class="text-center text-muted py-5">
+                        <td colspan="5" class="text-center text-muted py-5">
                             <i class="bi bi-cart-x fs-1 d-block mb-2"></i>
                             Cart is empty. Scan barcode or click products.
                         </td>
@@ -145,26 +176,26 @@
         <div class="p-3 border-top bg-light">
             <div class="d-flex justify-content-between mb-1 small text-muted">
                 <span>Subtotal</span>
-                <span class="fw-semibold text-dark" id="lblSubtotal">$0.00</span>
+                <span class="fw-semibold text-dark" id="lblSubtotal">৳ 0.00</span>
             </div>
             <div class="d-flex justify-content-between mb-1 small text-muted">
                 <span class="d-flex align-items-center gap-1">
                     Tax / VAT
-                    <input type="number" id="taxRateInput" value="5.0" step="0.5" min="0" max="100" class="form-control form-control-sm text-center p-0" style="width: 45px; height: 20px; font-size: 0.75rem;" /> %
+                    <input type="number" id="taxRateInput" value="0.0" step="0.5" min="0" max="100" class="form-control form-control-sm text-center p-0" style="width: 45px; height: 22px; font-size: 0.75rem;" /> %
                 </span>
-                <span class="fw-semibold text-dark" id="lblTax">$0.00</span>
+                <span class="fw-semibold text-dark" id="lblTax">৳ 0.00</span>
             </div>
             <div class="d-flex justify-content-between mb-2 small text-muted">
                 <span class="d-flex align-items-center gap-1">
                     Discount
-                    <input type="number" id="discountPercentInput" value="0" step="1" min="0" max="100" class="form-control form-control-sm text-center p-0" style="width: 45px; height: 20px; font-size: 0.75rem;" /> %
+                    <input type="number" id="discountPercentInput" value="0" step="1" min="0" max="100" class="form-control form-control-sm text-center p-0" style="width: 45px; height: 22px; font-size: 0.75rem;" /> %
                 </span>
-                <span class="fw-semibold text-danger" id="lblDiscount">$0.00</span>
+                <span class="fw-semibold text-danger" id="lblDiscount">৳ 0.00</span>
             </div>
 
             <div class="d-flex justify-content-between align-items-center pt-2 border-top mb-3">
                 <span class="fw-bold text-dark fs-5">Grand Total</span>
-                <span class="fw-extrabold text-primary fs-4" id="lblGrandTotal">$0.00</span>
+                <span class="fw-extrabold text-primary fs-4" id="lblGrandTotal">৳ 0.00</span>
             </div>
 
             <!-- Payment Method Pills -->
@@ -182,27 +213,68 @@
 
             <!-- Quick Bills -->
             <div class="d-flex gap-1 mb-2">
-                <button class="btn btn-sm btn-light border flex-grow-1 quick-bill-btn" onclick="setQuickTender(10)">$10</button>
-                <button class="btn btn-sm btn-light border flex-grow-1 quick-bill-btn" onclick="setQuickTender(20)">$20</button>
-                <button class="btn btn-sm btn-light border flex-grow-1 quick-bill-btn" onclick="setQuickTender(50)">$50</button>
-                <button class="btn btn-sm btn-light border flex-grow-1 quick-bill-btn" onclick="setQuickTender(100)">$100</button>
+                <button class="btn btn-sm btn-light border flex-grow-1 quick-bill-btn" onclick="setQuickTender(500)">৳ 500</button>
+                <button class="btn btn-sm btn-light border flex-grow-1 quick-bill-btn" onclick="setQuickTender(1000)">৳ 1,000</button>
+                <button class="btn btn-sm btn-light border flex-grow-1 quick-bill-btn" onclick="setQuickTender(2000)">৳ 2,000</button>
+                <button class="btn btn-sm btn-light border flex-grow-1 quick-bill-btn" onclick="setQuickTender(5000)">৳ 5,000</button>
             </div>
 
             <!-- Tender Input & Change Due -->
             <div class="input-group input-group-sm mb-2">
-                <span class="input-group-text bg-white text-muted">Paid Tender</span>
-                <input type="number" id="paidAmountInput" step="0.5" class="form-control text-end fw-bold" placeholder="0.00" />
+                <span class="input-group-text bg-white text-muted">Paid Tender (৳)</span>
+                <input type="number" id="paidAmountInput" step="1" class="form-control text-end fw-bold" placeholder="0.00" />
             </div>
 
             <div class="d-flex justify-content-between align-items-center mb-3 small bg-white p-2 rounded border">
                 <span class="text-muted fw-medium">Change Due:</span>
-                <span class="fw-bold text-success fs-6" id="lblChangeDue">$0.00</span>
+                <span class="fw-bold text-success fs-6" id="lblChangeDue">৳ 0.00</span>
             </div>
 
             <!-- Checkout Button -->
             <button class="btn btn-success w-100 py-2 fw-bold d-flex align-items-center justify-content-center gap-2 shadow-sm" onclick="processCheckout()">
                 <i class="bi bi-check2-circle fs-5"></i> Complete Order
             </button>
+        </div>
+    </div>
+</div>
+
+<!-- Requirement 4: In-page Official Sales Invoice Report Modal -->
+<div class="modal fade" id="posInvoiceModal" tabindex="-1" aria-labelledby="posInvoiceModalLabel" aria-hidden="true" data-bs-backdrop="static">
+    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content shadow-lg border-0">
+            <div class="modal-header bg-dark text-white py-2 px-3">
+                <div class="d-flex align-items-center gap-2">
+                    <span class="badge bg-success fs-6"><i class="bi bi-check2-circle"></i> Sale Completed</span>
+                    <h5 class="modal-title fs-6 mb-0" id="posInvoiceModalLabel">
+                        Invoice: <span id="modalInvoiceNo" class="text-warning fw-bold"></span>
+                    </h5>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                    <button type="button" class="btn btn-sm btn-primary fw-bold" onclick="printPosInvoice()">
+                        <i class="bi bi-printer-fill me-1"></i> Print Invoice
+                    </button>
+                    <button type="button" class="btn btn-sm btn-success fw-bold" onclick="resetPosForNextOrder()" data-bs-dismiss="modal">
+                        <i class="bi bi-plus-circle me-1"></i> New Sale
+                    </button>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close" onclick="resetPosForNextOrder()"></button>
+                </div>
+            </div>
+            <div class="modal-body p-0 bg-light" style="min-height: 550px; height: 75vh;">
+                <iframe id="posInvoiceFrame" style="width: 100%; height: 100%; border: none;" src="about:blank"></iframe>
+            </div>
+            <div class="modal-footer py-2 px-3 bg-white d-flex justify-content-between align-items-center">
+                <span class="text-muted small">
+                    <i class="bi bi-info-circle me-1"></i> Invoice report rendered directly from Sales database.
+                </span>
+                <div class="d-flex gap-2">
+                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="resetPosForNextOrder()" data-bs-dismiss="modal">
+                        Close & Next Order
+                    </button>
+                    <button type="button" class="btn btn-primary btn-sm px-3 fw-bold" onclick="printPosInvoice()">
+                        <i class="bi bi-printer me-1"></i> Print
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
 </div>
