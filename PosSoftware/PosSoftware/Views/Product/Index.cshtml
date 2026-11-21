@@ -6,8 +6,8 @@
 <div class="container-fluid p-0">
     <div class="d-flex justify-content-between align-items-center mb-3">
         <div>
-            <h4 class="fw-bold text-dark m-0">Products & Medicine Catalog</h4>
-            <span class="text-muted small">Manage items, images, generic names, barcodes, and rates</span>
+            <h4 class="fw-bold text-dark m-0">Products & Distribution Catalog</h4>
+            <span class="text-muted small">Manage distribution items, images, brands/specifications, barcodes, and rates</span>
         </div>
         <a href="@Url.Action("Create", "Product")" class="btn btn-theme-new">
             <i class="bi bi-plus-lg me-1"></i> Add Product
@@ -18,7 +18,7 @@
     <div class="card border-0 shadow-sm p-3 mb-3 bg-white rounded-3">
         <form method="get" class="row g-2 align-items-center">
             <div class="col-md-6">
-                <input type="text" name="search" value="@ViewBag.SearchTerm" class="form-control form-control-sm" placeholder="Search name, generic, barcode, SKU..." />
+                <input type="text" name="search" value="@ViewBag.SearchTerm" class="form-control form-control-sm" placeholder="Search product name, specification, barcode, SKU (ASM-001...)..." />
             </div>
             <div class="col-md-4">
                 <select name="categoryId" asp-items="ViewBag.Categories" class="form-select form-select-sm" onchange="this.form.submit()">
@@ -39,7 +39,7 @@
                     <tr>
                         <th style="width: 50px;">Image</th>
                         <th>Product Name</th>
-                        <th>Generic</th>
+                        <th>Specification</th>
                         <th>Code / Barcode</th>
                         <th>Category</th>
                         <th class="text-end">Cost</th>

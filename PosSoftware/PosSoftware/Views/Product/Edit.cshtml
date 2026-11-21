@@ -7,7 +7,7 @@
     <div class="d-flex justify-content-between align-items-center mb-3">
         <div>
             <h4 class="fw-bold text-dark m-0">Edit Product: @Model.Name</h4>
-            <span class="text-muted small">Update generic name, image, SKU, barcode, and rates</span>
+            <span class="text-muted small">Update brand/specification, image, SKU, barcode, and rates</span>
         </div>
         <a href="@Url.Action("Index", "Product")" class="btn btn-outline-secondary">
             <i class="bi bi-arrow-left"></i> Back to Products
@@ -30,7 +30,7 @@
                     <span asp-validation-for="Name" class="text-danger small"></span>
                 </div>
                 <div class="col-md-4">
-                    <label class="form-label fw-semibold">Generic Name</label>
+                    <label class="form-label fw-semibold">Brand / Specification</label>
                     <input asp-for="GenericName" class="form-control" />
                 </div>
                 <div class="col-md-3">

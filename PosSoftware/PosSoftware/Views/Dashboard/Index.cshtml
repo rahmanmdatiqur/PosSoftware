@@ -99,38 +99,38 @@
     <div>
         <div class="dash-title">
             <i class="bi bi-shop text-success fs-3"></i>
-            <span>POS Dashboard</span>
+            <span>Distribution POS Dashboard</span>
         </div>
-        <div class="dash-subtitle">Pharmacy & Canteen Sales, Purchases & Stock Metrics</div>
+        <div class="dash-subtitle">Wholesale & Distribution Sales, Purchases & Stock Metrics</div>
     </div>
     <div class="text-muted small">
-        <span class="text-primary">Home</span> / POS Dashboard
+        <span class="text-primary">Home</span> / Distribution Dashboard
     </div>
 </div>
 
-<!-- 4 Metrics Cards matching Screenshot 1 -->
+<!-- 4 Metrics Cards customized for Wholesale Distribution -->
 <div class="row g-3 mb-4">
-    <!-- 1. Total Sales (Pharmacy) -->
+    <!-- 1. Total Distribution Sales -->
     <div class="col-12 col-sm-6 col-xl-3">
         <div class="metric-card bg-green">
-            <div class="metric-title">TOTAL SALES (PHARMACY)</div>
+            <div class="metric-title">TOTAL SALES (DISTRIBUTION)</div>
             <div class="metric-amount">৳ @Model.TotalSalesPharmacy.ToString("N2")</div>
             <div class="metric-sub">
                 <i class="bi bi-receipt"></i> @Model.TotalInvoicesPharmacy Invoices
             </div>
             <div class="metric-watermark">
-                <i class="bi bi-capsule"></i>
+                <i class="bi bi-cart-check"></i>
             </div>
         </div>
     </div>
 
-    <!-- 2. Total Purchase (Pharmacy) -->
+    <!-- 2. Total Supplier Purchases -->
     <div class="col-12 col-sm-6 col-xl-3">
         <div class="metric-card bg-blue">
-            <div class="metric-title">TOTAL PURCHASE (PHARMACY)</div>
+            <div class="metric-title">TOTAL PURCHASES (SUPPLIERS)</div>
             <div class="metric-amount">৳ @Model.TotalPurchasePharmacy.ToString("N2")</div>
             <div class="metric-sub">
-                <i class="bi bi-cart-check"></i> @Model.TotalPurchasesCountPharmacy Purchases
+                <i class="bi bi-bag-check"></i> @Model.TotalPurchasesCountPharmacy Purchases
             </div>
             <div class="metric-watermark">
                 <i class="bi bi-truck"></i>
@@ -138,43 +138,43 @@
         </div>
     </div>
 
-    <!-- 3. Total Sales (Canteen) -->
+    <!-- 3. Total Catalog Items / SKUs -->
     <div class="col-12 col-sm-6 col-xl-3">
         <div class="metric-card bg-orange">
-            <div class="metric-title">TOTAL SALES (CANTEEN)</div>
-            <div class="metric-amount">৳ @Model.TotalSalesCanteen.ToString("N2")</div>
+            <div class="metric-title">CATALOG PRODUCTS (SKUs)</div>
+            <div class="metric-amount">@Model.TotalProducts Items</div>
             <div class="metric-sub">
-                <i class="bi bi-receipt"></i> 0 Invoices
-            </div>
-            <div class="metric-watermark">
-                <i class="bi bi-cup-hot"></i>
-            </div>
-        </div>
-    </div>
-
-    <!-- 4. Total Purchase (Canteen) -->
-    <div class="col-12 col-sm-6 col-xl-3">
-        <div class="metric-card bg-purple">
-            <div class="metric-title">TOTAL PURCHASE (CANTEEN)</div>
-            <div class="metric-amount">৳ @Model.TotalPurchaseCanteen.ToString("N2")</div>
-            <div class="metric-sub">
-                <i class="bi bi-cart-check"></i> 0 Purchases
+                <i class="bi bi-tags"></i> Across 10 Catalog Brands
             </div>
             <div class="metric-watermark">
                 <i class="bi bi-box-seam"></i>
             </div>
         </div>
     </div>
+
+    <!-- 4. Low Stock / Reorder Alert -->
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="metric-card bg-purple">
+            <div class="metric-title">LOW STOCK ALERTS</div>
+            <div class="metric-amount">@Model.LowStockCount Items</div>
+            <div class="metric-sub">
+                <i class="bi bi-exclamation-triangle"></i> Needs Replenishment
+            </div>
+            <div class="metric-watermark">
+                <i class="bi bi-boxes"></i>
+            </div>
+        </div>
+    </div>
 </div>
 
-<!-- 2 Bar Charts matching Screenshot 1 -->
+<!-- 2 Bar Charts -->
 <div class="row g-3 mb-4">
-    <!-- Day Wise Pharmacy Sales Chart -->
+    <!-- Day Wise Distribution Sales Chart -->
     <div class="col-12 col-lg-6">
         <div class="chart-box">
             <div class="chart-box-title text-success">
                 <i class="bi bi-bar-chart-line-fill"></i>
-                <span>Day Wise Pharmacy Sales (Last 1 Month)</span>
+                <span>Day Wise Distribution Sales (Last 1 Month)</span>
             </div>
             <div style="height: 280px; position: relative;">
                 <canvas id="salesChart"></canvas>
@@ -182,12 +182,12 @@
         </div>
     </div>
 
-    <!-- Day Wise Pharmacy Purchase Chart -->
+    <!-- Day Wise Supplier Purchase Chart -->
     <div class="col-12 col-lg-6">
         <div class="chart-box">
             <div class="chart-box-title text-primary">
                 <i class="bi bi-graph-up-arrow"></i>
-                <span>Day Wise Pharmacy Purchase (Last 1 Month)</span>
+                <span>Day Wise Supplier Purchases (Last 1 Month)</span>
             </div>
             <div style="height: 280px; position: relative;">
                 <canvas id="purchaseChart"></canvas>
