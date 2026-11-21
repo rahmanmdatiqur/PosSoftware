@@ -15,11 +15,13 @@ namespace PosSoftware.Controllers
     {
         private readonly ApplicationDbContext _context;
         private readonly IInventoryService _inventoryService;
+        private readonly INumberSequenceService _sequenceService;
 
-        public SalesController(ApplicationDbContext context, IInventoryService inventoryService)
+        public SalesController(ApplicationDbContext context, IInventoryService inventoryService, INumberSequenceService sequenceService)
         {
             _context = context;
             _inventoryService = inventoryService;
+            _sequenceService = sequenceService;
         }
 
         [HttpGet]
@@ -68,8 +70,8 @@ namespace PosSoftware.Controllers
         [HttpGet]
         public async Task<IActionResult> Create()
         {
-            var count = await _context.Sales.CountAsync();
-            var nextInvoice = $"INV-{(count + 225):D5}";
+            var nextInvoice = await _sequenceService.GetNextInvoiceNumberAsync();
+            var nextSo = await _sequenceService.GetNextSaleOrderNumberAsync();
 
             ViewBag.Customers = await _context.Customers.Where(c => c.IsActive).OrderBy(c => c.Name).ToListAsync();
             ViewBag.Categories = await _context.Categories.Where(c => c.IsActive).OrderBy(c => c.Name).ToListAsync();
@@ -77,6 +79,7 @@ namespace PosSoftware.Controllers
             var vm = new SaleEntryViewModel
             {
                 InvoiceNo = nextInvoice,
+                SaleOrderNo = nextSo,
                 SaleDate = DateTime.UtcNow,
                 CustomerId = (await _context.Customers.FirstOrDefaultAsync(c => c.Name == "Walk-in" || c.IsActive))?.Id ?? 1,
                 CustomerType = "Walk-in",
@@ -84,6 +87,13 @@ namespace PosSoftware.Controllers
             };
 
             return View(vm);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetNextInvoiceNo()
+        {
+            var nextNo = await _sequenceService.GetNextInvoiceNumberAsync();
+            return Json(new { success = true, invoiceNo = nextNo });
         }
 
         [HttpPost]
@@ -99,14 +109,27 @@ namespace PosSoftware.Controllers
             var uidClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (int.TryParse(uidClaim, out int uid)) cashierId = uid;
 
+            // Auto-generate invoice number if missing or already in use
+            string invoiceNo = model.InvoiceNo;
+            if (string.IsNullOrWhiteSpace(invoiceNo) || await _context.Sales.AnyAsync(s => s.InvoiceNumber == invoiceNo))
+            {
+                invoiceNo = await _sequenceService.GetNextInvoiceNumberAsync();
+            }
+
+            string? saleOrderNo = model.SaleOrderNo;
+            if (string.IsNullOrWhiteSpace(saleOrderNo))
+            {
+                saleOrderNo = await _sequenceService.GetNextSaleOrderNumberAsync();
+            }
+
             var sale = new Sale
             {
-                InvoiceNumber = model.InvoiceNo,
+                InvoiceNumber = invoiceNo,
                 SaleDate = model.SaleDate,
                 CustomerId = model.CustomerId > 0 ? model.CustomerId : 1,
                 CustomerType = model.CustomerType ?? "Walk-in",
                 AdmissionNo = model.AdmissionNo,
-                SaleOrderNo = model.SaleOrderNo,
+                SaleOrderNo = saleOrderNo,
                 FundType = model.FundType ?? "Cash",
                 MobileNumber = model.MobileNumber,
                 SubTotal = model.TotalAmount,

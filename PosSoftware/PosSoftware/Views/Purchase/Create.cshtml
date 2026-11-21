@@ -91,11 +91,14 @@
         <div class="row g-2">
             <!-- Purchase No -->
             <div class="col-12 col-sm-6 col-md-2">
-                <label class="form-label-custom">Purchase No</label>
+                <label class="form-label-custom d-flex justify-content-between align-items-center">
+                    <span>Purchase No</span>
+                    <span class="badge bg-primary text-white" style="font-size: 0.65rem; padding: 2px 5px;"><i class="bi bi-magic"></i> Auto</span>
+                </label>
                 <div class="input-group input-group-sm">
-                    <span class="input-group-text bg-light text-success p-1"><i class="bi bi-chevron-double-left"></i></span>
-                    <input type="text" id="purchaseNoInput" class="form-control form-control-custom text-center fw-bold" value="@Model.PurchaseNo" readonly />
-                    <span class="input-group-text bg-light text-success p-1"><i class="bi bi-chevron-double-right"></i></span>
+                    <span class="input-group-text bg-light text-primary p-1"><i class="bi bi-hash"></i></span>
+                    <input type="text" id="purchaseNoInput" class="form-control form-control-custom text-center fw-bold bg-light" value="@Model.PurchaseNo" readonly />
+                    <button type="button" class="btn btn-outline-secondary p-1" onclick="fetchNextPurchaseNo()" title="Refresh Next Purchase Number"><i class="bi bi-arrow-clockwise"></i></button>
                 </div>
             </div>
 
@@ -296,6 +299,18 @@
     document.addEventListener('DOMContentLoaded', function () {
         loadModalProducts();
     });
+
+    async function fetchNextPurchaseNo() {
+        try {
+            const res = await fetch('@Url.Action("GetNextPurchaseNo", "Purchase")');
+            const data = await res.json();
+            if (data && data.purchaseNo) {
+                document.getElementById('purchaseNoInput').value = data.purchaseNo;
+            }
+        } catch (e) {
+            console.error(e);
+        }
+    }
 
     function openProductModal() {
         const modal = new bootstrap.Modal(document.getElementById('productModal'));

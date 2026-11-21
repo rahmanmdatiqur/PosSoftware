@@ -27,6 +27,7 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
 // 3. Application Services
 builder.Services.AddScoped<IPermissionService, PermissionService>();
 builder.Services.AddScoped<IInventoryService, InventoryService>();
+builder.Services.AddScoped<INumberSequenceService, NumberSequenceService>();
 
 // 4. Session & Caching
 builder.Services.AddDistributedMemoryCache();

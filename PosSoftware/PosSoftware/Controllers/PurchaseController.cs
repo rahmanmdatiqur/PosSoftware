@@ -14,10 +14,12 @@ namespace PosSoftware.Controllers
     public class PurchaseController : Controller
     {
         private readonly ApplicationDbContext _context;
+        private readonly INumberSequenceService _sequenceService;
 
-        public PurchaseController(ApplicationDbContext context)
+        public PurchaseController(ApplicationDbContext context, INumberSequenceService sequenceService)
         {
             _context = context;
+            _sequenceService = sequenceService;
         }
 
         [HttpGet]
@@ -45,8 +47,8 @@ namespace PosSoftware.Controllers
         [HttpGet]
         public async Task<IActionResult> Create()
         {
-            var count = await _context.Purchases.CountAsync();
-            var nextPurchaseNo = $"PUR-{(count + 38):D5}";
+            var nextPurchaseNo = await _sequenceService.GetNextPurchaseNumberAsync();
+            var nextPo = await _sequenceService.GetNextPurchaseOrderNumberAsync();
 
             ViewBag.Suppliers = await _context.Suppliers.Where(s => s.IsActive).OrderBy(s => s.Name).ToListAsync();
             ViewBag.Categories = await _context.Categories.Where(c => c.IsActive).OrderBy(c => c.Name).ToListAsync();
@@ -54,12 +56,20 @@ namespace PosSoftware.Controllers
             var vm = new PurchaseEntryViewModel
             {
                 PurchaseNo = nextPurchaseNo,
+                PurchaseOrderNo = nextPo,
                 PurchaseDate = DateTime.UtcNow,
                 ReceiveDate = DateTime.UtcNow,
                 SupplierId = (await _context.Suppliers.FirstOrDefaultAsync(s => s.IsActive))?.Id ?? 1
             };
 
             return View(vm);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetNextPurchaseNo()
+        {
+            var nextNo = await _sequenceService.GetNextPurchaseNumberAsync();
+            return Json(new { success = true, purchaseNo = nextNo });
         }
 
         [HttpPost]
@@ -75,13 +85,26 @@ namespace PosSoftware.Controllers
             var uidClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (int.TryParse(uidClaim, out int uid)) userId = uid;
 
+            // Auto-generate purchase number if missing or already in use
+            string purchaseNo = model.PurchaseNo;
+            if (string.IsNullOrWhiteSpace(purchaseNo) || await _context.Purchases.AnyAsync(p => p.PurchaseNo == purchaseNo))
+            {
+                purchaseNo = await _sequenceService.GetNextPurchaseNumberAsync();
+            }
+
+            string? poNo = model.PurchaseOrderNo;
+            if (string.IsNullOrWhiteSpace(poNo))
+            {
+                poNo = await _sequenceService.GetNextPurchaseOrderNumberAsync();
+            }
+
             var purchase = new Purchase
             {
-                PurchaseNo = model.PurchaseNo,
+                PurchaseNo = purchaseNo,
                 SupplierId = model.SupplierId,
                 PurchaseDate = model.PurchaseDate,
                 ReceiveDate = model.ReceiveDate,
-                PurchaseOrderNo = model.PurchaseOrderNo,
+                PurchaseOrderNo = poNo,
                 TotalQty = model.Items.Sum(x => x.Quantity),
                 SubTotal = model.SubTotal,
                 DiscountAmount = model.DiscountAmount,
