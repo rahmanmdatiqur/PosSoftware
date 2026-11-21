@@ -1,0 +1,336 @@
+@model PosSoftware.Models.Entities.Purchase
+@{
+    Layout = null;
+    var supplierCode = Model.Supplier != null ? $"SUP-{(Model.Supplier.Id + 15):D6}" : "SUP-000016";
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <title>Purchase Invoice - @Model.PurchaseNo</title>
+    <style>
+        @@page {
+            size: A4;
+            margin: 15mm;
+        }
+        body {
+            font-family: Arial, "Helvetica Neue", Helvetica, sans-serif;
+            font-size: 11pt;
+            color: #000;
+            background: #f1f5f9;
+            margin: 0;
+            padding: 20px;
+        }
+        .invoice-paper {
+            background: #fff;
+            max-width: 210mm;
+            min-height: 270mm;
+            margin: 0 auto;
+            padding: 20mm;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            position: relative;
+            box-sizing: border-box;
+        }
+        .no-print {
+            max-width: 210mm;
+            margin: 0 auto 15px auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .btn-print {
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            padding: 8px 18px;
+            font-size: 14px;
+            font-weight: bold;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .btn-back {
+            background-color: #6c757d;
+            color: #fff;
+            border: none;
+            padding: 8px 16px;
+            font-size: 14px;
+            border-radius: 4px;
+            text-decoration: none;
+        }
+        /* Top Header matching Screenshot 10 */
+        .report-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            border-bottom: 2px solid #000;
+            padding-bottom: 12px;
+            margin-bottom: 16px;
+        }
+        .company-info {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+        }
+        .company-logo {
+            width: 60px;
+            height: 60px;
+        }
+        .company-title {
+            color: #107c41;
+            font-size: 15pt;
+            font-weight: bold;
+            line-height: 1.2;
+            margin-bottom: 2px;
+        }
+        .company-sub {
+            font-size: 7pt;
+            color: #00529b;
+            font-weight: bold;
+            letter-spacing: 0.5px;
+            margin-bottom: 4px;
+            text-transform: uppercase;
+        }
+        .company-address {
+            font-size: 8.5pt;
+            color: #333;
+            line-height: 1.35;
+        }
+        .header-meta {
+            text-align: right;
+            font-size: 9.5pt;
+        }
+        .barcode-box {
+            margin-bottom: 4px;
+        }
+        .invoice-title {
+            text-align: center;
+            font-size: 14pt;
+            font-weight: bold;
+            letter-spacing: 1px;
+            margin: 12px 0 16px;
+            text-transform: uppercase;
+        }
+        /* Supplier Details matching Screenshot 10 */
+        .supplier-info-grid {
+            display: flex;
+            justify-content: space-between;
+            font-size: 9.5pt;
+            margin-bottom: 18px;
+            line-height: 1.5;
+        }
+        /* Items Table */
+        .items-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 15px;
+        }
+        .items-table th {
+            border-top: 1px solid #000;
+            border-bottom: 1px solid #000;
+            padding: 6px 8px;
+            font-size: 9pt;
+            font-weight: bold;
+            text-align: left;
+            background: #f8fafc;
+        }
+        .items-table td {
+            padding: 6px 8px;
+            font-size: 9.5pt;
+            border-bottom: 1px solid #eee;
+        }
+        .text-right {
+            text-align: right;
+        }
+        .text-center {
+            text-align: center;
+        }
+        /* Summary table */
+        .totals-row td {
+            border-top: 1px solid #000;
+            border-bottom: 1px solid #000;
+            font-weight: bold;
+            font-size: 10pt;
+        }
+        .in-words {
+            font-size: 9pt;
+            font-style: italic;
+            font-weight: 600;
+            margin-top: 12px;
+            margin-bottom: 70px;
+        }
+        /* Signatures */
+        .signatures-row {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 80px;
+            margin-bottom: 25px;
+            padding: 0 15px;
+        }
+        .sig-block {
+            text-align: center;
+            width: 160px;
+            border-top: 1px solid #333;
+            padding-top: 5px;
+            font-size: 9pt;
+            font-weight: 600;
+        }
+        /* Footer */
+        .report-footer {
+            border-top: 1px solid #000;
+            padding-top: 8px;
+            font-size: 7.5pt;
+            color: #555;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        @@media print {
+            body {
+                background: #fff;
+                padding: 0;
+            }
+            .invoice-paper {
+                box-shadow: none;
+                padding: 0;
+                margin: 0;
+                min-height: auto;
+            }
+            .no-print {
+                display: none !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="no-print">
+        <a href="@Url.Action("Index", "Purchase")" class="btn-back">← Back to Purchase List</a>
+        <div>
+            <button onclick="window.print()" class="btn-print">🖨️ Print Purchase Invoice</button>
+        </div>
+    </div>
+
+    <div class="invoice-paper">
+        <!-- Top Header matching Screenshot 10 -->
+        <div class="report-header">
+            <div class="company-info">
+                <svg class="company-logo" viewBox="0 0 100 100">
+                    <circle cx="50" cy="50" r="46" fill="#ffffff" stroke="#00529b" stroke-width="5"/>
+                    <circle cx="50" cy="50" r="40" fill="none" stroke="#00529b" stroke-width="2"/>
+                    <path d="M25 52 L35 52 L42 32 L50 68 L58 42 L65 52 L75 52" fill="none" stroke="#00529b" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <div>
+                    <div class="company-title">Willows Health Centre</div>
+                    <div class="company-sub">WILLOWS HEALTH CENTRE - PRIMARY HEALTH CARE CENTRE</div>
+                    <div class="company-address">
+                        Jafrabad, Lalabazar, South Surma, Sylhet.<br />
+                        willowshealthcentre.wbsbd@gmail.com
+                    </div>
+                </div>
+            </div>
+
+            <div class="header-meta">
+                <div class="barcode-box">
+                    @Html.Raw(ViewBag.BarcodeSvg)
+                </div>
+                <div><b>Purchase No :</b> @Model.PurchaseNo</div>
+                <div><b>Purchase Date :</b> @Model.PurchaseDate.ToString("yyyy-MM-dd")</div>
+                <div><b>Receive Date :</b> @Model.ReceiveDate.ToString("yyyy-MM-dd")</div>
+            </div>
+        </div>
+
+        <!-- Title -->
+        <div class="invoice-title">Purchase Invoice</div>
+
+        <!-- Supplier & Metadata matching Screenshot 10 -->
+        <div class="supplier-info-grid">
+            <div>
+                <div><b>Supplier:</b> @(Model.Supplier?.Name ?? "Supplier")</div>
+                <div><b>Supplier Code:</b> @supplierCode</div>
+                <div><b>Address:</b> @(Model.Supplier?.Address ?? "Sylhet")</div>
+            </div>
+            <div style="text-align: right;">
+                <div><b>Type:</b> Pharmacy</div>
+                <div><b>Status:</b> @(Model.IsPosted ? "Posted" : Model.Status)</div>
+            </div>
+        </div>
+
+        <!-- Items Table matching Screenshot 10 -->
+        <table class="items-table">
+            <thead>
+                <tr>
+                    <th style="width: 35px;">SL</th>
+                    <th style="width: 110px;">Item Code</th>
+                    <th>Item</th>
+                    <th style="width: 70px;" class="text-right">Qty</th>
+                    <th style="width: 90px;" class="text-right">Rate</th>
+                    <th style="width: 100px;" class="text-right">Amount</th>
+                </tr>
+            </thead>
+            <tbody>
+                @{ int sl = 1; }
+                @foreach (var item in Model.PurchaseItems)
+                {
+                    <tr>
+                        <td>@sl</td>
+                        <td>@(string.IsNullOrEmpty(item.ProductCode) ? (item.Product?.SKU ?? "-") : item.ProductCode)</td>
+                        <td><b>@item.ProductName</b></td>
+                        <td class="text-right">@item.Quantity.ToString("N2")</td>
+                        <td class="text-right">@item.UnitPrice.ToString("N2")</td>
+                        <td class="text-right">@item.TotalAmount.ToString("N2")</td>
+                    </tr>
+                    sl++;
+                }
+                <!-- Total Row -->
+                <tr class="totals-row">
+                    <td colspan="3" class="text-right"><b>Total Quantity:</b></td>
+                    <td class="text-right"><b>@Model.TotalQty.ToString("N2")</b></td>
+                    <td class="text-right"><b>Total Amount:</b></td>
+                    <td class="text-right"><b>@Model.TotalAmount.ToString("N2")</b></td>
+                </tr>
+            </tbody>
+        </table>
+
+        <!-- In Words matching Screenshot 10 -->
+        <div class="in-words">
+            Amount in words : @ViewBag.AmountInWords
+        </div>
+
+        <!-- Three Signature Lines matching Screenshot 10 -->
+        <div class="signatures-row">
+            <div class="sig-block">Prepared By</div>
+            <div class="sig-block">Received By</div>
+            <div class="sig-block">Authorized By</div>
+        </div>
+
+        <!-- Footer matching Screenshot 10 -->
+        <div class="report-footer">
+            <div>
+                Printed Date : @DateTime.Now.ToString("MM/dd/yyyy, h:mm:ss tt")
+            </div>
+
+            <div style="text-align: center;">
+                <svg width="42" height="42" viewBox="0 0 100 100">
+                    <rect width="100" height="100" fill="#fff" stroke="#000" stroke-width="2"/>
+                    <rect x="10" y="10" width="25" height="25" fill="#000"/>
+                    <rect x="65" y="10" width="25" height="25" fill="#000"/>
+                    <rect x="10" y="65" width="25" height="25" fill="#000"/>
+                    <rect x="42" y="42" width="16" height="16" fill="#000"/>
+                    <rect x="42" y="15" width="8" height="18" fill="#000"/>
+                    <rect x="15" y="42" width="18" height="8" fill="#000"/>
+                    <rect x="68" y="68" width="18" height="18" fill="#000"/>
+                </svg>
+            </div>
+
+            <div style="text-align: right;">
+                Print By : @(Model.CreatedByUser?.Username ?? "Erp")<br />
+                Managed by Wellbeing Bangladesh Society (WBS)
+            </div>
+        </div>
+        <div style="text-align: center; font-size: 7pt; color: #00529b; margin-top: 6px;">
+            🌐 www.wbs-bd.org &nbsp;|&nbsp; Facebook &nbsp;|&nbsp; YouTube
+        </div>
+    </div>
+</body>
+</html>
+

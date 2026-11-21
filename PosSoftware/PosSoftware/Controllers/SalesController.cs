@@ -1,0 +1,293 @@
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using PosSoftware.Data;
+using PosSoftware.Filters;
+using PosSoftware.Models.Entities;
+using PosSoftware.Models.ViewModels;
+using PosSoftware.Services;
+using System.Security.Claims;
+
+namespace PosSoftware.Controllers
+{
+    [Authorize]
+    public class SalesController : Controller
+    {
+        private readonly ApplicationDbContext _context;
+        private readonly IInventoryService _inventoryService;
+
+        public SalesController(ApplicationDbContext context, IInventoryService inventoryService)
+        {
+            _context = context;
+            _inventoryService = inventoryService;
+        }
+
+        [HttpGet]
+        [AuthorizePermission("SalesOrders", "View")]
+        public async Task<IActionResult> Index(string? search, string? startDate, string? endDate, string? paymentMethod)
+        {
+            var q = _context.Sales
+                .Include(s => s.Customer)
+                .Include(s => s.Cashier)
+                .Include(s => s.SaleItems)
+                .AsQueryable();
+
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                var term = search.Trim().ToLower();
+                q = q.Where(s => s.InvoiceNumber.ToLower().Contains(term) 
+                              || (s.Customer != null && s.Customer.Name.ToLower().Contains(term))
+                              || (s.SaleOrderNo != null && s.SaleOrderNo.ToLower().Contains(term)));
+            }
+
+            if (!string.IsNullOrEmpty(paymentMethod))
+            {
+                q = q.Where(s => s.PaymentMethod == paymentMethod);
+            }
+
+            if (DateTime.TryParse(startDate, out var sDate))
+            {
+                q = q.Where(s => s.SaleDate >= sDate.Date);
+                ViewBag.StartDate = sDate.ToString("yyyy-MM-dd");
+            }
+
+            if (DateTime.TryParse(endDate, out var eDate))
+            {
+                var eDayEnd = eDate.Date.AddDays(1).AddTicks(-1);
+                q = q.Where(s => s.SaleDate <= eDayEnd);
+                ViewBag.EndDate = eDate.ToString("yyyy-MM-dd");
+            }
+
+            ViewBag.Search = search;
+            ViewBag.PaymentMethod = paymentMethod;
+
+            var sales = await q.OrderByDescending(s => s.SaleDate).ThenByDescending(s => s.Id).Take(150).ToListAsync();
+            return View(sales);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> Create()
+        {
+            var count = await _context.Sales.CountAsync();
+            var nextInvoice = $"INV-{(count + 225):D5}";
+
+            ViewBag.Customers = await _context.Customers.Where(c => c.IsActive).OrderBy(c => c.Name).ToListAsync();
+            ViewBag.Categories = await _context.Categories.Where(c => c.IsActive).OrderBy(c => c.Name).ToListAsync();
+
+            var vm = new SaleEntryViewModel
+            {
+                InvoiceNo = nextInvoice,
+                SaleDate = DateTime.UtcNow,
+                CustomerId = (await _context.Customers.FirstOrDefaultAsync(c => c.Name == "Walk-in" || c.IsActive))?.Id ?? 1,
+                CustomerType = "Walk-in",
+                FundType = "Cash"
+            };
+
+            return View(vm);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Create([FromBody] SaleEntryViewModel model)
+        {
+            if (model == null || model.Items == null || !model.Items.Any())
+            {
+                return Json(new { success = false, message = "Please add at least one item to the sale." });
+            }
+
+            int cashierId = 1;
+            var uidClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (int.TryParse(uidClaim, out int uid)) cashierId = uid;
+
+            var sale = new Sale
+            {
+                InvoiceNumber = model.InvoiceNo,
+                SaleDate = model.SaleDate,
+                CustomerId = model.CustomerId > 0 ? model.CustomerId : 1,
+                CustomerType = model.CustomerType ?? "Walk-in",
+                AdmissionNo = model.AdmissionNo,
+                SaleOrderNo = model.SaleOrderNo,
+                FundType = model.FundType ?? "Cash",
+                MobileNumber = model.MobileNumber,
+                SubTotal = model.TotalAmount,
+                DiscountPercent = model.DiscountPercent,
+                DiscountAmount = model.DiscountAmount,
+                RoundUp = model.RoundUp,
+                FinalPayable = model.FinalPayable,
+                GrandTotal = model.FinalPayable > 0 ? model.FinalPayable : model.TotalAmount - model.DiscountAmount,
+                PaidAmount = model.PaidAmount,
+                ChangeAmount = (model.PaidAmount > model.FinalPayable) ? (model.PaidAmount - model.FinalPayable) : 0,
+                DuesAmount = model.DuesAmount,
+                PaymentMethod = model.PaymentMethod ?? "Cash",
+                Status = "Completed",
+                IsPosted = true,
+                Notes = model.Notes,
+                CashierId = cashierId
+            };
+
+            foreach (var item in model.Items)
+            {
+                var product = await _context.Products.FindAsync(item.ProductId);
+                if (product != null)
+                {
+                    int prevStock = product.CurrentStock;
+                    product.CurrentStock -= item.Quantity;
+
+                    var tx = new StockTransaction
+                    {
+                        ProductId = product.Id,
+                        TransactionType = "Sale",
+                        Quantity = item.Quantity,
+                        PreviousStock = prevStock,
+                        NewStock = product.CurrentStock,
+                        ReferenceNo = sale.InvoiceNumber,
+                        Notes = $"Sale item deducted via Invoice #{sale.InvoiceNumber}",
+                        CreatedByUserId = cashierId,
+                        CreatedAt = DateTime.UtcNow
+                    };
+                    _context.StockTransactions.Add(tx);
+                }
+
+                sale.SaleItems.Add(new SaleItem
+                {
+                    ProductId = item.ProductId,
+                    ProductName = item.ProductName,
+                    BatchNo = item.BatchNo,
+                    Quantity = item.Quantity,
+                    UnitPrice = item.Price,
+                    SubTotal = item.SubTotal,
+                    DiscountAmount = item.DiscountAmount,
+                    TotalAmount = item.TotalAmount
+                });
+            }
+
+            _context.Sales.Add(sale);
+            await _context.SaveChangesAsync();
+
+            return Json(new
+            {
+                success = true,
+                message = "Sale invoice created successfully!",
+                saleId = sale.Id,
+                invoiceNumber = sale.InvoiceNumber
+            });
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetReport(int id)
+        {
+            var sale = await _context.Sales
+                .Include(s => s.Customer)
+                .Include(s => s.Cashier)
+                .Include(s => s.SaleItems)
+                .ThenInclude(si => si.Product)
+                .FirstOrDefaultAsync(s => s.Id == id);
+
+            if (sale == null) return NotFound();
+
+            ViewBag.BarcodeSvg = BarcodeService.GenerateSvgBarcode(sale.InvoiceNumber);
+            ViewBag.AmountInWords = NumberToWordsConverter.ConvertToWords(sale.PaidAmount > 0 ? sale.PaidAmount : sale.GrandTotal, "Taka");
+
+            return View(sale);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> PostSale(int id)
+        {
+            var sale = await _context.Sales.FindAsync(id);
+            if (sale == null) return Json(new { success = false, message = "Sale not found" });
+
+            sale.IsPosted = true;
+            sale.Status = "Completed";
+            await _context.SaveChangesAsync();
+
+            return Json(new { success = true, message = "Sale marked as Posted." });
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetProductsJson(string? query, int? categoryId)
+        {
+            var q = _context.Products
+                .Include(p => p.Category)
+                .Include(p => p.Unit)
+                .Where(p => p.IsActive);
+
+            if (categoryId.HasValue && categoryId.Value > 0)
+            {
+                q = q.Where(p => p.CategoryId == categoryId.Value);
+            }
+
+            if (!string.IsNullOrWhiteSpace(query))
+            {
+                var term = query.Trim().ToLower();
+                q = q.Where(p => p.Name.ToLower().Contains(term)
+                              || (p.GenericName != null && p.GenericName.ToLower().Contains(term))
+                              || p.SKU.ToLower().Contains(term)
+                              || p.Barcode.ToLower().Contains(term));
+            }
+
+            var list = await q.OrderBy(p => p.Name).Take(50).Select(p => new ProductModalDto
+            {
+                Id = p.Id,
+                Name = p.Name,
+                GenericName = p.GenericName ?? "",
+                Code = p.SKU,
+                Barcode = p.Barcode,
+                CategoryId = p.CategoryId,
+                CategoryName = p.Category != null ? p.Category.Name : "",
+                UnitName = p.Unit != null ? p.Unit.ShortCode : "PCS",
+                PurchasePrice = p.CostPrice,
+                SalePrice = p.SellingPrice,
+                CurrentStock = p.CurrentStock,
+                ImageUrl = p.ImageUrl ?? "/uploads/products/pharma-item.svg"
+            }).ToListAsync();
+
+            return Json(new { success = true, items = list });
+        }
+
+        [HttpGet]
+        [AuthorizePermission("SalesOrders", "View")]
+        public async Task<IActionResult> Details(int id)
+        {
+            var sale = await _context.Sales
+                .Include(s => s.Customer)
+                .Include(s => s.Cashier)
+                .Include(s => s.SaleItems)
+                .ThenInclude(si => si.Product)
+                .FirstOrDefaultAsync(s => s.Id == id);
+
+            if (sale == null) return NotFound();
+
+            return View(sale);
+        }
+
+        [HttpGet]
+        [AuthorizePermission("Reports", "View")]
+        public async Task<IActionResult> Reports(string? startDate, string? endDate)
+        {
+            var sDate = DateTime.TryParse(startDate, out var parsedStart) ? parsedStart.Date : DateTime.UtcNow.Date.AddDays(-30);
+            var eDate = DateTime.TryParse(endDate, out var parsedEnd) ? parsedEnd.Date.AddDays(1).AddTicks(-1) : DateTime.UtcNow.Date.AddDays(1).AddTicks(-1);
+
+            var sales = await _context.Sales
+                .Include(s => s.Customer)
+                .Include(s => s.SaleItems)
+                .Where(s => s.SaleDate >= sDate && s.SaleDate <= eDate)
+                .OrderBy(s => s.SaleDate)
+                .ToListAsync();
+
+            ViewBag.StartDate = sDate.ToString("yyyy-MM-dd");
+            ViewBag.EndDate = eDate.ToString("yyyy-MM-dd");
+
+            ViewBag.TotalSales = sales.Sum(s => s.GrandTotal);
+            ViewBag.TotalOrders = sales.Count;
+            ViewBag.TotalTax = sales.Sum(s => s.TaxAmount);
+            ViewBag.TotalDiscount = sales.Sum(s => s.DiscountAmount);
+
+            ViewBag.CashTotal = sales.Where(s => s.PaymentMethod == "Cash").Sum(s => s.GrandTotal);
+            ViewBag.CardTotal = sales.Where(s => s.PaymentMethod == "Card").Sum(s => s.GrandTotal);
+            ViewBag.MobileTotal = sales.Where(s => s.PaymentMethod == "MobileBanking").Sum(s => s.GrandTotal);
+
+            return View(sales);
+        }
+    }
+}

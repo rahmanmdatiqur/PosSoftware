@@ -1,0 +1,93 @@
+@model List<PosSoftware.Models.Entities.StockTransaction>
+@{
+    ViewData["Title"] = "Stock Audit Log";
+    var products = ViewBag.Products as List<PosSoftware.Models.Entities.Product> ?? new();
+}
+
+<div class="container-fluid p-0">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h4 class="fw-bold text-dark m-0">Inventory Audit Ledger</h4>
+            <span class="text-muted small">Complete immutable history of inventory changes</span>
+        </div>
+        <a href="@Url.Action("Index", "Inventory")" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> Back to Inventory
+        </a>
+    </div>
+
+    <!-- Filter Bar -->
+    <div class="card border-0 shadow-sm p-3 mb-3 bg-white rounded-3">
+        <form method="get" class="row g-2 align-items-center">
+            <div class="col-md-5">
+                <select name="productId" class="form-select form-select-sm" onchange="this.form.submit()">
+                    <option value="">-- All Products --</option>
+                    @foreach (var p in products)
+                    {
+                        <option value="@p.Id" selected="@(ViewBag.SelectedProductId == p.Id)">@p.Name</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-4">
+                <select name="type" class="form-select form-select-sm" onchange="this.form.submit()">
+                    <option value="">-- All Movement Types --</option>
+                    <option value="Sale" selected="@(ViewBag.SelectedType == "Sale")">Sale (POS Checkout)</option>
+                    <option value="StockIn" selected="@(ViewBag.SelectedType == "StockIn")">Stock In (Receipt)</option>
+                    <option value="Adjustment" selected="@(ViewBag.SelectedType == "Adjustment")">Adjustment (Audit)</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <button type="submit" class="btn btn-sm btn-primary w-100"><i class="bi bi-funnel"></i> Apply Filter</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Table -->
+    <div class="card border-0 shadow-sm rounded-3 bg-white">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Date & Time</th>
+                        <th>Product</th>
+                        <th>Type</th>
+                        <th class="text-center">Prev Stock</th>
+                        <th class="text-center">Qty Changed</th>
+                        <th class="text-center">New Stock</th>
+                        <th>Reference / Notes</th>
+                        <th>Operator</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (!Model.Any())
+                    {
+                        <tr>
+                            <td colspan="8" class="text-center text-muted py-4">No audit transactions recorded.</td>
+                        </tr>
+                    }
+                    @foreach (var tx in Model)
+                    {
+                        <tr>
+                            <td>@tx.CreatedAt.ToString("yyyy-MM-dd HH:mm")</td>
+                            <td><span class="fw-semibold text-dark">@(tx.Product?.Name ?? "-")</span></td>
+                            <td>
+                                <span class="badge @(tx.TransactionType == "Sale" ? "bg-primary" : tx.TransactionType == "StockIn" ? "bg-success" : "bg-warning text-dark")">
+                                    @tx.TransactionType
+                                </span>
+                            </td>
+                            <td class="text-center text-muted">@tx.PreviousStock</td>
+                            <td class="text-center fw-bold @(tx.TransactionType == "StockIn" ? "text-success" : tx.TransactionType == "Sale" ? "text-danger" : "text-dark")">
+                                @(tx.TransactionType == "StockIn" ? $"+{tx.Quantity}" : tx.TransactionType == "Sale" ? $"-{tx.Quantity}" : $"{tx.Quantity}")
+                            </td>
+                            <td class="text-center fw-bold">@tx.NewStock</td>
+                            <td>
+                                <small class="d-block fw-semibold text-dark">@tx.ReferenceNo</small>
+                                <small class="text-muted">@tx.Notes</small>
+                            </td>
+                            <td><small class="text-muted">@(tx.CreatedByUser?.Username ?? "System")</small></td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

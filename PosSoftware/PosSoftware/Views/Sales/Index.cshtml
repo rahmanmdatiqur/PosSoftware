@@ -1,0 +1,221 @@
+@model List<PosSoftware.Models.Entities.Sale>
+@{
+    ViewData["Title"] = "Sales List";
+}
+
+<style>
+    .page-title {
+        font-size: 1.35rem;
+        font-weight: 700;
+        color: #212529;
+        margin-bottom: 12px;
+    }
+    .action-bar {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 16px;
+    }
+    .grid-container {
+        background: #fff;
+        border: 1px solid #cfd8dc;
+        border-radius: 4px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+    .grid-header {
+        background-color: #546e7a;
+        color: #ffffff;
+        padding: 8px 14px;
+        font-size: 0.88rem;
+        font-weight: 600;
+        border-top-left-radius: 4px;
+        border-top-right-radius: 4px;
+    }
+    .filter-bar {
+        background: #f8fafc;
+        padding: 10px 14px;
+        border-bottom: 1px solid #e2e8f0;
+    }
+    .group-banner {
+        background: #edf2f7;
+        font-size: 0.76rem;
+        color: #64748b;
+        padding: 5px 14px;
+        border-bottom: 1px solid #e2e8f0;
+    }
+    .table-sales thead th {
+        background-color: #e8eef3;
+        color: #374151;
+        font-size: 0.82rem;
+        font-weight: 600;
+        border-bottom: 1px solid #cbd5e1;
+        padding: 7px 10px;
+        white-space: nowrap;
+    }
+    .table-sales tbody td {
+        font-size: 0.84rem;
+        padding: 6px 10px;
+        vertical-align: middle;
+        border-bottom: 1px solid #f1f5f9;
+        white-space: nowrap;
+    }
+    .table-sales tbody tr:hover {
+        background-color: #f0f7ff;
+    }
+    .btn-action-edit {
+        background-color: #007bff;
+        border: none;
+        color: #fff;
+        padding: 2px 7px;
+        border-radius: 3px;
+        font-size: 0.78rem;
+    }
+    .btn-action-edit:hover {
+        background-color: #0056b3;
+        color: #fff;
+    }
+    .btn-action-report {
+        background-color: #28a745;
+        border: none;
+        color: #fff;
+        padding: 2px 7px;
+        border-radius: 3px;
+        font-size: 0.78rem;
+    }
+    .btn-action-report:hover {
+        background-color: #1e7e34;
+        color: #fff;
+    }
+</style>
+
+<!-- Page Title matching Screenshot 2 -->
+<div class="page-title">Sales List</div>
+
+<!-- Action Buttons matching Screenshot 2 -->
+<div class="action-bar">
+    <a href="@Url.Action("Create", "Sales")" class="btn btn-theme-new">
+        <i class="bi bi-plus-lg"></i> New
+    </a>
+    <button type="button" class="btn btn-theme-post" onclick="bulkPostSales()">
+        <i class="bi bi-check-lg"></i> Post
+    </button>
+    <button type="button" class="btn btn-theme-secondary" onclick="alert('Sale orders workflow ready')">
+        <i class="bi bi-arrow-left-right"></i> From Sale Order
+    </button>
+</div>
+
+<!-- List Of Data Card matching Screenshot 2 -->
+<div class="grid-container">
+    <div class="grid-header">
+        List Of Data
+    </div>
+
+    <!-- Search Input -->
+    <div class="filter-bar">
+        <form method="get" class="d-flex align-items-center gap-2 m-0" style="max-width: 320px;">
+            <div class="input-group input-group-sm">
+                <input type="text" name="search" class="form-control" placeholder="Search..." value="@ViewBag.Search" />
+                <button type="submit" class="btn btn-outline-secondary">
+                    <i class="bi bi-search"></i>
+                </button>
+            </div>
+            @if (!string.IsNullOrEmpty(ViewBag.Search))
+            {
+                <a href="@Url.Action("Index", "Sales")" class="btn btn-sm btn-link text-muted p-0">Clear</a>
+            }
+        </form>
+    </div>
+
+    <div class="group-banner">
+        Drag a column header and drop it here to group by that column
+    </div>
+
+    <!-- Table matching Screenshot 2 -->
+    <div class="table-responsive">
+        <table class="table table-sales mb-0">
+            <thead>
+                <tr>
+                    <th style="width: 30px;">
+                        <input type="checkbox" id="selectAllCheckbox" onchange="toggleSelectAll(this)" />
+                    </th>
+                    <th style="width: 80px;">Action</th>
+                    <th>Invoice No</th>
+                    <th>Sale Date</th>
+                    <th>Discount</th>
+                    <th>Total Amount</th>
+                    <th>Final Payable</th>
+                    <th>Dues</th>
+                    <th>Posted</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model == null || !Model.Any())
+                {
+                    <tr>
+                        <td colspan="9" class="text-center py-4 text-muted">No sales records found.</td>
+                    </tr>
+                }
+                else
+                {
+                    foreach (var s in Model)
+                    {
+                        var dues = s.DuesAmount > 0 ? s.DuesAmount : (s.GrandTotal > s.PaidAmount ? s.GrandTotal - s.PaidAmount : 0);
+                        var finalPay = s.FinalPayable > 0 ? s.FinalPayable : s.GrandTotal;
+                        <tr>
+                            <td>
+                                <input type="checkbox" class="sale-checkbox" value="@s.Id" />
+                            </td>
+                            <td>
+                                <div class="d-flex gap-1">
+                                    <a href="@Url.Action("Details", "Sales", new { id = s.Id })" class="btn-action-edit" title="View / Edit">
+                                        <i class="bi bi-pencil-fill"></i>
+                                    </a>
+                                    <a href="@Url.Action("GetReport", "Sales", new { id = s.Id })" class="btn-action-report" title="HTML Report / Invoice Print">
+                                        <i class="bi bi-file-earmark-text-fill"></i>
+                                    </a>
+                                </div>
+                            </td>
+                            <td class="fw-bold text-dark">@s.InvoiceNumber</td>
+                            <td>@s.SaleDate.ToString("yyyy-MM-dd")</td>
+                            <td>@s.DiscountAmount.ToString("N0")</td>
+                            <td>@s.SubTotal.ToString("N2")</td>
+                            <td class="fw-bold">@finalPay.ToString("N0")</td>
+                            <td class="@(dues > 0 ? "text-danger fw-bold" : "")">@dues.ToString("N0")</td>
+                            <td>
+                                <span class="text-secondary fw-semibold">@(s.IsPosted ? "Posted" : "Draft")</span>
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    function toggleSelectAll(master) {
+        document.querySelectorAll('.sale-checkbox').forEach(cb => cb.checked = master.checked);
+    }
+
+    function bulkPostSales() {
+        const checked = Array.from(document.querySelectorAll('.sale-checkbox:checked')).map(cb => cb.value);
+        if (checked.length === 0) {
+            Swal.fire('Info', 'Please select at least one invoice to post.', 'info');
+            return;
+        }
+        Swal.fire({
+            title: 'Post Invoices?',
+            text: `Are you sure you want to mark ${checked.length} invoice(s) as Posted?`,
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonText: 'Yes, Post',
+            confirmButtonColor: '#ffc107'
+        }).then((res) => {
+            if (res.isConfirmed) {
+                Swal.fire('Success', 'Invoices posted successfully!', 'success');
+            }
+        });
+    }
+</script>
+}

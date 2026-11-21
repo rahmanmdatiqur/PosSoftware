@@ -1,0 +1,87 @@
+@model List<PosSoftware.Models.Entities.Sale>
+@{
+    ViewData["Title"] = "Sales Reports";
+}
+
+<div class="container-fluid p-0">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h4 class="fw-bold text-dark m-0">Business Intelligence & Reports</h4>
+            <span class="text-muted small">Sales revenue analytics and tender distribution</span>
+        </div>
+        <button class="btn btn-outline-primary" onclick="window.print()">
+            <i class="bi bi-printer"></i> Print Summary
+        </button>
+    </div>
+
+    <!-- Date Range Filter -->
+    <div class="card border-0 shadow-sm p-3 mb-4 bg-white rounded-3">
+        <form method="get" class="row g-2 align-items-center">
+            <div class="col-md-5">
+                <label class="form-label small fw-semibold">Start Date</label>
+                <input type="date" name="startDate" value="@ViewBag.StartDate" class="form-control" />
+            </div>
+            <div class="col-md-5">
+                <label class="form-label small fw-semibold">End Date</label>
+                <input type="date" name="endDate" value="@ViewBag.EndDate" class="form-control" />
+            </div>
+            <div class="col-md-2 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary w-100" style="margin-top: 28px;">Generate Report</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- KPI Summary Row -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm p-3 bg-white rounded-3">
+                <span class="text-muted small text-uppercase fw-semibold">Total Revenue</span>
+                <h3 class="fw-bold text-primary mt-1 mb-0">$@ViewBag.TotalSales.ToString("N2")</h3>
+                <small class="text-muted">Net sales processed</small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm p-3 bg-white rounded-3">
+                <span class="text-muted small text-uppercase fw-semibold">Orders Count</span>
+                <h3 class="fw-bold text-dark mt-1 mb-0">@ViewBag.TotalOrders</h3>
+                <small class="text-muted">Invoices generated</small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm p-3 bg-white rounded-3">
+                <span class="text-muted small text-uppercase fw-semibold">VAT / Tax Collected</span>
+                <h3 class="fw-bold text-success mt-1 mb-0">$@ViewBag.TotalTax.ToString("N2")</h3>
+                <small class="text-muted">Tax liability</small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm p-3 bg-white rounded-3">
+                <span class="text-muted small text-uppercase fw-semibold">Discounts Granted</span>
+                <h3 class="fw-bold text-danger mt-1 mb-0">$@ViewBag.TotalDiscount.ToString("N2")</h3>
+                <small class="text-muted">Promotional reductions</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- Payment Tender Breakdown -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm p-3 bg-white rounded-3 border-start border-success border-4">
+                <span class="text-muted small text-uppercase fw-bold">Cash Sales</span>
+                <h4 class="fw-bold text-success mt-1 mb-0">$@ViewBag.CashTotal.ToString("N2")</h4>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm p-3 bg-white rounded-3 border-start border-primary border-4">
+                <span class="text-muted small text-uppercase fw-bold">Credit/Debit Card Sales</span>
+                <h4 class="fw-bold text-primary mt-1 mb-0">$@ViewBag.CardTotal.ToString("N2")</h4>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm p-3 bg-white rounded-3 border-start border-warning border-4">
+                <span class="text-muted small text-uppercase fw-bold">Mobile Banking Sales</span>
+                <h4 class="fw-bold text-warning mt-1 mb-0">$@ViewBag.MobileTotal.ToString("N2")</h4>
+            </div>
+        </div>
+    </div>
+</div>

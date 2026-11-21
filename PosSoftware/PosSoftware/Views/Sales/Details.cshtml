@@ -1,0 +1,106 @@
+@model PosSoftware.Models.Entities.Sale
+@{
+    ViewData["Title"] = $"Invoice #{Model.InvoiceNumber}";
+}
+
+<div class="container-fluid p-0">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h4 class="fw-bold text-dark m-0">Invoice #@Model.InvoiceNumber</h4>
+            <span class="text-muted small">Processed on @Model.SaleDate.ToString("f")</span>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="@Url.Action("PrintReceipt", "Pos", new { id = Model.Id })" target="_blank" class="btn btn-outline-primary">
+                <i class="bi bi-printer"></i> Print Receipt
+            </a>
+            <a href="@Url.Action("Index", "Sales")" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left"></i> Back to Invoices
+            </a>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm rounded-3 bg-white mb-3">
+                <div class="card-header bg-white border-bottom py-3">
+                    <h6 class="fw-bold text-dark m-0">Line Items</h6>
+                </div>
+                <div class="table-responsive">
+                    <table class="table align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Item</th>
+                                <th class="text-end">Unit Price</th>
+                                <th class="text-center">Quantity</th>
+                                <th class="text-end">Discount</th>
+                                <th class="text-end">Line Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in Model.SaleItems)
+                            {
+                                <tr>
+                                    <td>
+                                        <div class="fw-semibold text-dark">@item.ProductName</div>
+                                        <small class="text-muted">Barcode: @(item.Product?.Barcode ?? "-")</small>
+                                    </td>
+                                    <td class="text-end">$@item.UnitPrice.ToString("N2")</td>
+                                    <td class="text-center fw-bold">@item.Quantity</td>
+                                    <td class="text-end text-muted">-$@item.DiscountAmount.ToString("N2")</td>
+                                    <td class="text-end fw-bold">$@item.TotalAmount.ToString("N2")</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm rounded-3 bg-white p-3 mb-3">
+                <h6 class="fw-bold text-dark border-bottom pb-2">Payment Summary</h6>
+                <div class="d-flex justify-content-between py-1 text-muted">
+                    <span>Subtotal</span>
+                    <span class="fw-semibold text-dark">$@Model.SubTotal.ToString("N2")</span>
+                </div>
+                <div class="d-flex justify-content-between py-1 text-muted">
+                    <span>Tax (@Model.TaxRate.ToString("0.0")%)</span>
+                    <span class="fw-semibold text-dark">$@Model.TaxAmount.ToString("N2")</span>
+                </div>
+                <div class="d-flex justify-content-between py-1 text-muted">
+                    <span>Discount</span>
+                    <span class="fw-semibold text-danger">-$@Model.DiscountAmount.ToString("N2")</span>
+                </div>
+                <div class="d-flex justify-content-between py-2 border-top border-bottom mt-2">
+                    <span class="fw-bold text-dark">Grand Total</span>
+                    <span class="fw-extrabold text-primary fs-5">$@Model.GrandTotal.ToString("N2")</span>
+                </div>
+                <div class="d-flex justify-content-between py-1 text-muted mt-2">
+                    <span>Payment Method</span>
+                    <span class="badge bg-secondary">@Model.PaymentMethod</span>
+                </div>
+                <div class="d-flex justify-content-between py-1 text-muted">
+                    <span>Paid Amount</span>
+                    <span class="fw-semibold text-dark">$@Model.PaidAmount.ToString("N2")</span>
+                </div>
+                <div class="d-flex justify-content-between py-1 text-muted">
+                    <span>Change Due</span>
+                    <span class="fw-bold text-success">$@Model.ChangeAmount.ToString("N2")</span>
+                </div>
+            </div>
+
+            <div class="card border-0 shadow-sm rounded-3 bg-white p-3">
+                <h6 class="fw-bold text-dark border-bottom pb-2">Customer & Cashier</h6>
+                <div class="small mb-2">
+                    <span class="text-muted d-block">Customer:</span>
+                    <span class="fw-semibold text-dark">@(Model.Customer?.Name ?? "Walk-in Customer")</span>
+                    <span class="text-muted d-block">@(Model.Customer?.Phone ?? "")</span>
+                </div>
+                <div class="small">
+                    <span class="text-muted d-block">Processed By Cashier:</span>
+                    <span class="fw-semibold text-dark">@(Model.Cashier?.FullName ?? "Counter Cashier") (@(Model.Cashier?.Username ?? ""))</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

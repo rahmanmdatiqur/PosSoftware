@@ -1,0 +1,184 @@
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using PosSoftware.Data;
+using PosSoftware.Filters;
+using PosSoftware.Models.Entities;
+using PosSoftware.Models.ViewModels;
+using PosSoftware.Services;
+using System.Security.Claims;
+
+namespace PosSoftware.Controllers
+{
+    [Authorize]
+    public class PurchaseController : Controller
+    {
+        private readonly ApplicationDbContext _context;
+
+        public PurchaseController(ApplicationDbContext context)
+        {
+            _context = context;
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> Index(string? search)
+        {
+            var q = _context.Purchases
+                .Include(p => p.Supplier)
+                .Include(p => p.CreatedByUser)
+                .Include(p => p.PurchaseItems)
+                .AsQueryable();
+
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                var term = search.Trim().ToLower();
+                q = q.Where(p => p.PurchaseNo.ToLower().Contains(term) 
+                              || (p.Supplier != null && p.Supplier.Name.ToLower().Contains(term))
+                              || (p.PurchaseOrderNo != null && p.PurchaseOrderNo.ToLower().Contains(term)));
+            }
+
+            ViewBag.SearchTerm = search;
+            var purchases = await q.OrderByDescending(p => p.PurchaseDate).ThenByDescending(p => p.Id).ToListAsync();
+            return View(purchases);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> Create()
+        {
+            var count = await _context.Purchases.CountAsync();
+            var nextPurchaseNo = $"PUR-{(count + 38):D5}";
+
+            ViewBag.Suppliers = await _context.Suppliers.Where(s => s.IsActive).OrderBy(s => s.Name).ToListAsync();
+            ViewBag.Categories = await _context.Categories.Where(c => c.IsActive).OrderBy(c => c.Name).ToListAsync();
+
+            var vm = new PurchaseEntryViewModel
+            {
+                PurchaseNo = nextPurchaseNo,
+                PurchaseDate = DateTime.UtcNow,
+                ReceiveDate = DateTime.UtcNow,
+                SupplierId = (await _context.Suppliers.FirstOrDefaultAsync(s => s.IsActive))?.Id ?? 1
+            };
+
+            return View(vm);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Create([FromBody] PurchaseEntryViewModel model)
+        {
+            if (model == null || model.Items == null || !model.Items.Any())
+            {
+                return Json(new { success = false, message = "Please add at least one item to purchase." });
+            }
+
+            int userId = 1;
+            var uidClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (int.TryParse(uidClaim, out int uid)) userId = uid;
+
+            var purchase = new Purchase
+            {
+                PurchaseNo = model.PurchaseNo,
+                SupplierId = model.SupplierId,
+                PurchaseDate = model.PurchaseDate,
+                ReceiveDate = model.ReceiveDate,
+                PurchaseOrderNo = model.PurchaseOrderNo,
+                TotalQty = model.Items.Sum(x => x.Quantity),
+                SubTotal = model.SubTotal,
+                DiscountAmount = model.DiscountAmount,
+                TotalAmount = model.TotalAmount,
+                PaidAmount = model.PaidAmount,
+                DueAmount = model.DueAmount,
+                Status = "Posted",
+                IsPosted = true,
+                Notes = model.Notes,
+                CreatedByUserId = userId,
+                CreatedAt = DateTime.UtcNow
+            };
+
+            foreach (var item in model.Items)
+            {
+                var product = await _context.Products.FindAsync(item.ProductId);
+                if (product != null)
+                {
+                    // Update purchase cost price
+                    if (item.PurchasePrice > 0)
+                    {
+                        product.CostPrice = item.PurchasePrice;
+                    }
+
+                    // Add stock
+                    int prevStock = product.CurrentStock;
+                    product.CurrentStock += item.Quantity;
+
+                    // Log stock audit transaction
+                    var tx = new StockTransaction
+                    {
+                        ProductId = product.Id,
+                        TransactionType = "Purchase",
+                        Quantity = item.Quantity,
+                        PreviousStock = prevStock,
+                        NewStock = product.CurrentStock,
+                        ReferenceNo = model.PurchaseNo,
+                        Notes = $"Stock received via Purchase #{model.PurchaseNo}",
+                        CreatedByUserId = userId,
+                        CreatedAt = DateTime.UtcNow
+                    };
+                    _context.StockTransactions.Add(tx);
+                }
+
+                purchase.PurchaseItems.Add(new PurchaseItem
+                {
+                    ProductId = item.ProductId,
+                    ProductName = item.ProductName,
+                    ProductCode = item.ProductCode,
+                    Quantity = item.Quantity,
+                    UnitPrice = item.PurchasePrice,
+                    TotalAmount = item.TotalAmount
+                });
+            }
+
+            _context.Purchases.Add(purchase);
+            await _context.SaveChangesAsync();
+
+            return Json(new
+            {
+                success = true,
+                message = "Purchase order saved and stock updated successfully!",
+                purchaseId = purchase.Id,
+                purchaseNo = purchase.PurchaseNo
+            });
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetReport(int id)
+        {
+            var purchase = await _context.Purchases
+                .Include(p => p.Supplier)
+                .Include(p => p.CreatedByUser)
+                .Include(p => p.PurchaseItems)
+                .ThenInclude(pi => pi.Product)
+                .FirstOrDefaultAsync(p => p.Id == id);
+
+            if (purchase == null) return NotFound();
+
+            ViewBag.BarcodeSvg = BarcodeService.GenerateSvgBarcode(purchase.PurchaseNo);
+            ViewBag.AmountInWords = NumberToWordsConverter.ConvertToWords(purchase.TotalAmount, "Taka");
+
+            return View(purchase);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> PostPurchase(int id)
+        {
+            var purchase = await _context.Purchases.FindAsync(id);
+            if (purchase == null) return Json(new { success = false, message = "Purchase not found" });
+
+            purchase.IsPosted = true;
+            purchase.Status = "Posted";
+            await _context.SaveChangesAsync();
+
+            return Json(new { success = true, message = "Purchase marked as Posted." });
+        }
+    }
+}
+

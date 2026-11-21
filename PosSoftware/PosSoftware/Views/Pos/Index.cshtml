@@ -1,0 +1,212 @@
+@model PosSoftware.Models.ViewModels.PosTerminalViewModel
+@{
+    ViewData["Title"] = "POS Terminal";
+}
+
+<div class="pos-container">
+    <!-- Left Pane: Product Catalog & Fast Barcode Search -->
+    <div class="pos-catalog-pane d-flex flex-column">
+        <!-- Search & Barcode Bar -->
+        <div class="card border-0 shadow-sm p-3 mb-3 bg-white rounded-3">
+            <div class="row g-2 align-items-center">
+                <div class="col-md-5">
+                    <div class="input-group">
+                        <span class="input-group-text bg-light text-primary border-end-0">
+                            <i class="bi bi-upc-scan fs-5"></i>
+                        </span>
+                        <input type="text" id="posBarcodeInput" class="form-control bg-light border-start-0" 
+                               placeholder="Scan Barcode (Auto-add) or Press Enter" autocomplete="off" />
+                    </div>
+                </div>
+                <div class="col-md-7">
+                    <div class="input-group">
+                        <span class="input-group-text bg-light text-muted border-end-0">
+                            <i class="bi bi-search"></i>
+                        </span>
+                        <input type="text" id="posSearchInput" class="form-control bg-light border-start-0" 
+                               placeholder="Search item name, SKU..." autocomplete="off" />
+                    </div>
+                </div>
+            </div>
+
+            <!-- Category Pills -->
+            <div class="d-flex gap-2 overflow-auto pt-3 pb-1" id="categoryFilterBar">
+                <div class="category-pill active" data-category-id="0" onclick="selectCategory('0', this)">
+                    <i class="bi bi-grid-fill me-1"></i> All Items
+                </div>
+                @foreach (var cat in Model.Categories)
+                {
+                    <div class="category-pill" data-category-id="@cat.Id" onclick="selectCategory('@cat.Id', this)">
+                        @cat.Name
+                    </div>
+                }
+            </div>
+        </div>
+
+        <!-- Product Cards Grid -->
+        <div class="flex-grow-1 overflow-auto pe-1">
+            <div class="row row-cols-2 row-cols-sm-3 row-cols-md-4 row-cols-xl-5 g-3" id="posProductGrid">
+                @foreach (var prod in Model.Products)
+                {
+                    <div class="col pos-product-item" 
+                         data-id="@prod.Id" 
+                         data-name="@prod.Name" 
+                         data-barcode="@prod.Barcode" 
+                         data-sku="@prod.SKU" 
+                         data-category-id="@prod.CategoryId">
+                        <div class="product-card shadow-sm" onclick='addToCart(@Html.Raw(System.Text.Json.JsonSerializer.Serialize(new {
+                            id = prod.Id,
+                            name = prod.Name,
+                            barcode = prod.Barcode,
+                            sellingPrice = prod.SellingPrice,
+                            costPrice = prod.CostPrice,
+                            currentStock = prod.CurrentStock
+                        })))'>
+                            <div>
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <span class="badge @(prod.CurrentStock <= prod.MinAlertStock ? "bg-danger" : "bg-success") stock-badge">
+                                        @prod.CurrentStock @(prod.Unit?.ShortCode ?? "pcs")
+                                    </span>
+                                    <span class="text-muted" style="font-size: 0.72rem;">@prod.SKU</span>
+                                </div>
+                                <div class="text-center my-1">
+                                    <img src="@(string.IsNullOrEmpty(prod.ImageUrl) ? "/uploads/products/pharma-item.svg" : prod.ImageUrl)" alt="@prod.Name" style="height: 48px; max-width: 100%; object-fit: contain;" />
+                                </div>
+                                <h6 class="fw-bold text-dark text-truncate mb-1" title="@prod.Name">@prod.Name</h6>
+                                <span class="text-muted" style="font-size: 0.75rem;">@prod.Category?.Name</span>
+                            </div>
+                            
+                            <div class="d-flex justify-content-between align-items-center mt-3 pt-2 border-top">
+                                <span class="fw-extrabold text-primary fs-6">$@prod.SellingPrice.ToString("N2")</span>
+                                <span class="btn btn-sm btn-light border p-1 rounded-circle">
+                                    <i class="bi bi-plus text-primary fw-bold"></i>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Pane: Order Cart & Checkout -->
+    <div class="pos-cart-pane shadow-sm">
+        <!-- Cart Header -->
+        <div class="p-3 border-bottom bg-light d-flex justify-content-between align-items-center">
+            <div>
+                <span class="badge bg-primary me-2">POS</span>
+                <span class="fw-bold text-dark small">Active Order</span>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+                <span class="badge bg-secondary rounded-pill" id="cartItemCountBadge">0</span>
+                <button class="btn btn-sm btn-outline-danger p-1" title="Clear Order" onclick="clearCart()">
+                    <i class="bi bi-trash"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Customer Selector -->
+        <div class="p-3 border-bottom bg-white">
+            <label class="form-label small text-muted mb-1">Customer</label>
+            <div class="input-group input-group-sm">
+                <span class="input-group-text bg-light"><i class="bi bi-person"></i></span>
+                <select id="posCustomerSelect" class="form-select">
+                    @foreach (var cust in Model.Customers)
+                    {
+                        <option value="@cust.Id">@cust.Name (@cust.Phone)</option>
+                    }
+                </select>
+            </div>
+        </div>
+
+        <!-- Cart Items Table -->
+        <div class="flex-grow-1 overflow-auto p-2">
+            <table class="table table-sm cart-table mb-0">
+                <thead>
+                    <tr>
+                        <th>Item</th>
+                        <th class="text-center" style="width: 80px;">Qty</th>
+                        <th class="text-end" style="width: 70px;">Total</th>
+                        <th style="width: 30px;"></th>
+                    </tr>
+                </thead>
+                <tbody id="cartTableBody">
+                    <tr>
+                        <td colspan="4" class="text-center text-muted py-5">
+                            <i class="bi bi-cart-x fs-1 d-block mb-2"></i>
+                            Cart is empty. Scan barcode or click products.
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Calculations Summary -->
+        <div class="p-3 border-top bg-light">
+            <div class="d-flex justify-content-between mb-1 small text-muted">
+                <span>Subtotal</span>
+                <span class="fw-semibold text-dark" id="lblSubtotal">$0.00</span>
+            </div>
+            <div class="d-flex justify-content-between mb-1 small text-muted">
+                <span class="d-flex align-items-center gap-1">
+                    Tax / VAT
+                    <input type="number" id="taxRateInput" value="5.0" step="0.5" min="0" max="100" class="form-control form-control-sm text-center p-0" style="width: 45px; height: 20px; font-size: 0.75rem;" /> %
+                </span>
+                <span class="fw-semibold text-dark" id="lblTax">$0.00</span>
+            </div>
+            <div class="d-flex justify-content-between mb-2 small text-muted">
+                <span class="d-flex align-items-center gap-1">
+                    Discount
+                    <input type="number" id="discountPercentInput" value="0" step="1" min="0" max="100" class="form-control form-control-sm text-center p-0" style="width: 45px; height: 20px; font-size: 0.75rem;" /> %
+                </span>
+                <span class="fw-semibold text-danger" id="lblDiscount">$0.00</span>
+            </div>
+
+            <div class="d-flex justify-content-between align-items-center pt-2 border-top mb-3">
+                <span class="fw-bold text-dark fs-5">Grand Total</span>
+                <span class="fw-extrabold text-primary fs-4" id="lblGrandTotal">$0.00</span>
+            </div>
+
+            <!-- Payment Method Pills -->
+            <div class="btn-group w-100 mb-2" role="group">
+                <button type="button" class="btn btn-sm btn-primary payment-btn active" onclick="selectPaymentMethod('Cash', this)">
+                    <i class="bi bi-cash me-1"></i> Cash
+                </button>
+                <button type="button" class="btn btn-sm btn-outline-primary payment-btn" onclick="selectPaymentMethod('Card', this)">
+                    <i class="bi bi-credit-card me-1"></i> Card
+                </button>
+                <button type="button" class="btn btn-sm btn-outline-primary payment-btn" onclick="selectPaymentMethod('MobileBanking', this)">
+                    <i class="bi bi-phone me-1"></i> Mobile
+                </button>
+            </div>
+
+            <!-- Quick Bills -->
+            <div class="d-flex gap-1 mb-2">
+                <button class="btn btn-sm btn-light border flex-grow-1 quick-bill-btn" onclick="setQuickTender(10)">$10</button>
+                <button class="btn btn-sm btn-light border flex-grow-1 quick-bill-btn" onclick="setQuickTender(20)">$20</button>
+                <button class="btn btn-sm btn-light border flex-grow-1 quick-bill-btn" onclick="setQuickTender(50)">$50</button>
+                <button class="btn btn-sm btn-light border flex-grow-1 quick-bill-btn" onclick="setQuickTender(100)">$100</button>
+            </div>
+
+            <!-- Tender Input & Change Due -->
+            <div class="input-group input-group-sm mb-2">
+                <span class="input-group-text bg-white text-muted">Paid Tender</span>
+                <input type="number" id="paidAmountInput" step="0.5" class="form-control text-end fw-bold" placeholder="0.00" />
+            </div>
+
+            <div class="d-flex justify-content-between align-items-center mb-3 small bg-white p-2 rounded border">
+                <span class="text-muted fw-medium">Change Due:</span>
+                <span class="fw-bold text-success fs-6" id="lblChangeDue">$0.00</span>
+            </div>
+
+            <!-- Checkout Button -->
+            <button class="btn btn-success w-100 py-2 fw-bold d-flex align-items-center justify-content-center gap-2 shadow-sm" onclick="processCheckout()">
+                <i class="bi bi-check2-circle fs-5"></i> Complete Order
+            </button>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/pos.js" asp-append-version="true"></script>
+}

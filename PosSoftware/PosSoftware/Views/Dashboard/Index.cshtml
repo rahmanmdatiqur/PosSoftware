@@ -1,0 +1,346 @@
+@model PosSoftware.Models.ViewModels.DashboardViewModel
+@{
+    ViewData["Title"] = "POS Dashboard";
+}
+
+<style>
+    .dash-header {
+        margin-bottom: 20px;
+    }
+    .dash-title {
+        font-size: 1.4rem;
+        font-weight: 700;
+        color: #1e293b;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    .dash-subtitle {
+        font-size: 0.8rem;
+        color: #64748b;
+        margin-top: 2px;
+    }
+    /* Metric Cards */
+    .metric-card {
+        border-radius: 6px;
+        color: #ffffff;
+        padding: 18px 20px;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+        transition: transform 0.2s;
+    }
+    .metric-card:hover {
+        transform: translateY(-2px);
+    }
+    .metric-card.bg-green {
+        background-color: #00a65a;
+    }
+    .metric-card.bg-blue {
+        background-color: #0073b7;
+    }
+    .metric-card.bg-orange {
+        background-color: #f39c12;
+    }
+    .metric-card.bg-purple {
+        background-color: #605ca8;
+    }
+    .metric-title {
+        font-size: 0.82rem;
+        text-transform: uppercase;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+        opacity: 0.95;
+    }
+    .metric-amount {
+        font-size: 1.85rem;
+        font-weight: 800;
+        margin: 8px 0;
+        line-height: 1.2;
+    }
+    .metric-sub {
+        font-size: 0.85rem;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        opacity: 0.9;
+    }
+    .metric-watermark {
+        position: absolute;
+        right: 15px;
+        top: 15px;
+        font-size: 3.5rem;
+        opacity: 0.2;
+        pointer-events: none;
+    }
+    /* Chart Cards */
+    .chart-box {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 6px;
+        padding: 16px 20px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+        margin-bottom: 24px;
+        height: 100%;
+    }
+    .chart-box-title {
+        font-size: 0.95rem;
+        font-weight: 700;
+        color: #334155;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 15px;
+    }
+</style>
+
+<!-- Top Dashboard Header matching Screenshot 1 -->
+<div class="dash-header d-flex flex-wrap justify-content-between align-items-center">
+    <div>
+        <div class="dash-title">
+            <i class="bi bi-shop text-success fs-3"></i>
+            <span>POS Dashboard</span>
+        </div>
+        <div class="dash-subtitle">Pharmacy & Canteen Sales, Purchases & Stock Metrics</div>
+    </div>
+    <div class="text-muted small">
+        <span class="text-primary">Home</span> / POS Dashboard
+    </div>
+</div>
+
+<!-- 4 Metrics Cards matching Screenshot 1 -->
+<div class="row g-3 mb-4">
+    <!-- 1. Total Sales (Pharmacy) -->
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="metric-card bg-green">
+            <div class="metric-title">TOTAL SALES (PHARMACY)</div>
+            <div class="metric-amount">৳ @Model.TotalSalesPharmacy.ToString("N2")</div>
+            <div class="metric-sub">
+                <i class="bi bi-receipt"></i> @Model.TotalInvoicesPharmacy Invoices
+            </div>
+            <div class="metric-watermark">
+                <i class="bi bi-capsule"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. Total Purchase (Pharmacy) -->
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="metric-card bg-blue">
+            <div class="metric-title">TOTAL PURCHASE (PHARMACY)</div>
+            <div class="metric-amount">৳ @Model.TotalPurchasePharmacy.ToString("N2")</div>
+            <div class="metric-sub">
+                <i class="bi bi-cart-check"></i> @Model.TotalPurchasesCountPharmacy Purchases
+            </div>
+            <div class="metric-watermark">
+                <i class="bi bi-truck"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3. Total Sales (Canteen) -->
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="metric-card bg-orange">
+            <div class="metric-title">TOTAL SALES (CANTEEN)</div>
+            <div class="metric-amount">৳ @Model.TotalSalesCanteen.ToString("N2")</div>
+            <div class="metric-sub">
+                <i class="bi bi-receipt"></i> 0 Invoices
+            </div>
+            <div class="metric-watermark">
+                <i class="bi bi-cup-hot"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- 4. Total Purchase (Canteen) -->
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="metric-card bg-purple">
+            <div class="metric-title">TOTAL PURCHASE (CANTEEN)</div>
+            <div class="metric-amount">৳ @Model.TotalPurchaseCanteen.ToString("N2")</div>
+            <div class="metric-sub">
+                <i class="bi bi-cart-check"></i> 0 Purchases
+            </div>
+            <div class="metric-watermark">
+                <i class="bi bi-box-seam"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 2 Bar Charts matching Screenshot 1 -->
+<div class="row g-3 mb-4">
+    <!-- Day Wise Pharmacy Sales Chart -->
+    <div class="col-12 col-lg-6">
+        <div class="chart-box">
+            <div class="chart-box-title text-success">
+                <i class="bi bi-bar-chart-line-fill"></i>
+                <span>Day Wise Pharmacy Sales (Last 1 Month)</span>
+            </div>
+            <div style="height: 280px; position: relative;">
+                <canvas id="salesChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Day Wise Pharmacy Purchase Chart -->
+    <div class="col-12 col-lg-6">
+        <div class="chart-box">
+            <div class="chart-box-title text-primary">
+                <i class="bi bi-graph-up-arrow"></i>
+                <span>Day Wise Pharmacy Purchase (Last 1 Month)</span>
+            </div>
+            <div style="height: 280px; position: relative;">
+                <canvas id="purchaseChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Invoices & Low Stock Items -->
+<div class="row g-3">
+    <div class="col-12 col-lg-7">
+        <div class="grid-card">
+            <div class="grid-card-header bg-dark">
+                <div class="d-flex align-items-center gap-2">
+                    <i class="bi bi-receipt text-warning"></i>
+                    <span>Recent Sales Invoices</span>
+                </div>
+                <a href="@Url.Action("Index", "Sales")" class="btn btn-sm btn-outline-light py-0 px-2" style="font-size:0.75rem;">View All</a>
+            </div>
+            <div class="table-responsive">
+                <table class="table grid-table mb-0">
+                    <thead>
+                        <tr>
+                            <th>Invoice #</th>
+                            <th>Date</th>
+                            <th>Customer</th>
+                            <th>Total</th>
+                            <th>Status</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var s in Model.RecentSales)
+                        {
+                            <tr>
+                                <td class="fw-bold text-primary">@s.InvoiceNumber</td>
+                                <td>@s.SaleDate.ToString("yyyy-MM-dd")</td>
+                                <td>@(s.Customer?.Name ?? "Walk-in")</td>
+                                <td class="fw-bold">৳ @s.GrandTotal.ToString("N2")</td>
+                                <td><span class="badge bg-success">@(s.IsPosted ? "Posted" : "Completed")</span></td>
+                                <td>
+                                    <a href="@Url.Action("GetReport", "Sales", new { id = s.Id })" class="btn btn-sm btn-success p-1 py-0" title="HTML Invoice Report">
+                                        <i class="bi bi-file-earmark-text"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-12 col-lg-5">
+        <div class="grid-card">
+            <div class="grid-card-header bg-danger text-white">
+                <div class="d-flex align-items-center gap-2">
+                    <i class="bi bi-exclamation-triangle-fill"></i>
+                    <span>Low Stock Alerts</span>
+                </div>
+                <span class="badge bg-white text-danger">@Model.LowStockCount Items</span>
+            </div>
+            <div class="table-responsive">
+                <table class="table grid-table mb-0">
+                    <thead>
+                        <tr>
+                            <th>Product</th>
+                            <th>Code</th>
+                            <th>Stock</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var p in Model.LowStockProducts)
+                        {
+                            <tr>
+                                <td class="fw-semibold">@p.Name</td>
+                                <td><span class="badge bg-light text-dark border">@p.SKU</span></td>
+                                <td><span class="badge bg-danger">@p.CurrentStock @(p.Unit?.ShortCode ?? "pcs")</span></td>
+                                <td>
+                                    <a href="@Url.Action("Create", "Purchase")" class="btn btn-sm btn-primary p-1 py-0" title="Purchase Restock">
+                                        <i class="bi bi-bag-plus"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    // Sales Chart
+    const salesCtx = document.getElementById('salesChart');
+    if (salesCtx) {
+        new Chart(salesCtx, {
+            type: 'bar',
+            data: {
+                labels: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.SalesChartLabels)),
+                datasets: [{
+                    label: 'Sales (৳)',
+                    data: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.SalesChartData)),
+                    backgroundColor: '#10b981',
+                    borderRadius: 3,
+                    barPercentage: 0.6
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) { return '৳ ' + value.toLocaleString(); }
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    // Purchase Chart
+    const purchaseCtx = document.getElementById('purchaseChart');
+    if (purchaseCtx) {
+        new Chart(purchaseCtx, {
+            type: 'bar',
+            data: {
+                labels: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.PurchaseChartLabels)),
+                datasets: [{
+                    label: 'Purchase (৳)',
+                    data: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.PurchaseChartData)),
+                    backgroundColor: '#38bdf8',
+                    borderRadius: 3,
+                    barPercentage: 0.6
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) { return '৳ ' + value.toLocaleString(); }
+                        }
+                    }
+                }
+            }
+        });
+    }
+</script>
+}
