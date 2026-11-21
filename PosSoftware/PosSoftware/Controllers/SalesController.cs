@@ -262,24 +262,30 @@ namespace PosSoftware.Controllers
                 q = q.Where(p => p.Name.ToLower().Contains(term)
                               || (p.GenericName != null && p.GenericName.ToLower().Contains(term))
                               || p.SKU.ToLower().Contains(term)
-                              || p.Barcode.ToLower().Contains(term));
+                              || p.Barcode.ToLower().Contains(term)
+                              || (p.Category != null && p.Category.Name.ToLower().Contains(term)));
             }
 
-            var list = await q.OrderBy(p => p.Name).Take(50).Select(p => new ProductModalDto
-            {
-                Id = p.Id,
-                Name = p.Name,
-                GenericName = p.GenericName ?? "",
-                Code = p.SKU,
-                Barcode = p.Barcode,
-                CategoryId = p.CategoryId,
-                CategoryName = p.Category != null ? p.Category.Name : "",
-                UnitName = p.Unit != null ? p.Unit.ShortCode : "PCS",
-                PurchasePrice = p.CostPrice,
-                SalePrice = p.SellingPrice,
-                CurrentStock = p.CurrentStock,
-                ImageUrl = p.ImageUrl ?? "/uploads/products/pharma-item.svg"
-            }).ToListAsync();
+            // Return ALL products sorted by Order Form sequence (ASM-001 ... ASM-170)
+            var list = await q
+                .OrderBy(p => p.SKU.StartsWith("ASM-") ? 0 : 1)
+                .ThenBy(p => p.SKU)
+                .ThenBy(p => p.Name)
+                .Select(p => new ProductModalDto
+                {
+                    Id = p.Id,
+                    Name = p.Name,
+                    GenericName = p.GenericName ?? "",
+                    Code = p.SKU,
+                    Barcode = p.Barcode,
+                    CategoryId = p.CategoryId,
+                    CategoryName = p.Category != null ? p.Category.Name : "",
+                    UnitName = p.Unit != null ? p.Unit.ShortCode : "PCS",
+                    PurchasePrice = p.CostPrice,
+                    SalePrice = p.SellingPrice,
+                    CurrentStock = p.CurrentStock,
+                    ImageUrl = p.ImageUrl ?? "/uploads/products/pharma-item.svg"
+                }).ToListAsync();
 
             return Json(new { success = true, items = list });
         }
