@@ -11,14 +11,12 @@ namespace PosSoftware.Services
         {
             if (string.IsNullOrWhiteSpace(text)) text = "INV-0000";
 
-            var sb = new StringBuilder();
-            sb.Append($"<svg xmlns='http://www.w3.org/2000/svg' height='{height}' class='barcode-svg' style='display:inline-block; vertical-align:middle;'>");
-
+            var bars = new StringBuilder();
             int x = 2;
             // Start quiet zone & guard
-            sb.Append($"<rect x='{x}' y='0' width='{barWidth * 2}' height='{height}' fill='#000'/>");
+            bars.Append($"<rect x='{x}' y='0' width='{barWidth * 2}' height='{height}' fill='#000'/>");
             x += barWidth * 3;
-            sb.Append($"<rect x='{x}' y='0' width='{barWidth}' height='{height}' fill='#000'/>");
+            bars.Append($"<rect x='{x}' y='0' width='{barWidth}' height='{height}' fill='#000'/>");
             x += barWidth * 2;
 
             // Simple pattern based on characters for realistic looking barcode
@@ -29,20 +27,20 @@ namespace PosSoftware.Services
                 int w2 = (val % 3 == 0) ? barWidth * 2 : barWidth;
                 int gap = (val % 2 == 0) ? barWidth : barWidth * 2;
 
-                sb.Append($"<rect x='{x}' y='0' width='{w1}' height='{height}' fill='#000'/>");
+                bars.Append($"<rect x='{x}' y='0' width='{w1}' height='{height}' fill='#000'/>");
                 x += w1 + gap;
-                sb.Append($"<rect x='{x}' y='0' width='{w2}' height='{height}' fill='#000'/>");
+                bars.Append($"<rect x='{x}' y='0' width='{w2}' height='{height}' fill='#000'/>");
                 x += w2 + barWidth;
             }
 
             // End guard
-            sb.Append($"<rect x='{x}' y='0' width='{barWidth * 2}' height='{height}' fill='#000'/>");
+            bars.Append($"<rect x='{x}' y='0' width='{barWidth * 2}' height='{height}' fill='#000'/>");
             x += barWidth * 3;
-            sb.Append($"<rect x='{x}' y='0' width='{barWidth}' height='{height}' fill='#000'/>");
+            bars.Append($"<rect x='{x}' y='0' width='{barWidth}' height='{height}' fill='#000'/>");
             x += barWidth * 2;
 
-            sb.Append("</svg>");
-            return sb.ToString();
+            int totalWidth = x + 2;
+            return $"<svg xmlns='http://www.w3.org/2000/svg' width='{totalWidth}' height='{height}' viewBox='0 0 {totalWidth} {height}' class='barcode-svg' style='display:block; margin-left:auto;'>{bars}</svg>";
         }
     }
 }
