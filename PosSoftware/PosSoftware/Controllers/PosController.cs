@@ -240,6 +240,29 @@ namespace PosSoftware.Controllers
             });
         }
 
+        [HttpPost]
+        public async Task<IActionResult> QuickAddCustomer([FromBody] QuickCustomerDto dto)
+        {
+            if (dto == null || string.IsNullOrWhiteSpace(dto.Name))
+            {
+                return Json(new { success = false, message = "Customer name is required." });
+            }
+
+            var customer = new Customer
+            {
+                Name = dto.Name.Trim(),
+                Phone = dto.Phone?.Trim() ?? "",
+                Address = dto.Address?.Trim() ?? "",
+                IsActive = true,
+                CreatedAt = DateTime.UtcNow
+            };
+
+            _context.Customers.Add(customer);
+            await _context.SaveChangesAsync();
+
+            return Json(new { success = true, id = customer.Id, name = customer.Name, phone = customer.Phone });
+        }
+
         [HttpGet]
         public async Task<IActionResult> PrintReceipt(int id)
         {

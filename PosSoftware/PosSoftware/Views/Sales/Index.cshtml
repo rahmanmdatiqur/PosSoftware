@@ -89,10 +89,31 @@
 </style>
 
 <!-- Page Title matching Screenshot 2 -->
-<div class="page-title">Sales List</div>
+<div class="page-title d-flex justify-content-between align-items-center">
+    <span>Sales List</span>
+    <a href="@Url.Action("Index", "Pos")" class="btn btn-primary d-inline-flex align-items-center gap-1 shadow-sm px-3 py-1 fw-bold">
+        <i class="bi bi-pc-display"></i> POS Terminal
+    </a>
+</div>
+
+@if (Context.Request.Query.ContainsKey("newInvoice") || TempData["SuccessMessage"] != null)
+{
+    var newInv = Context.Request.Query["newInvoice"].ToString();
+    if (string.IsNullOrEmpty(newInv)) newInv = TempData["SuccessMessage"]?.ToString();
+    <div class="alert alert-success alert-dismissible fade show d-flex align-items-center justify-content-between mb-3 shadow-sm border-success bg-success-subtle" role="alert">
+        <div>
+            <i class="bi bi-check-circle-fill fs-5 me-2 text-success"></i>
+            <strong>Success!</strong> Sale Invoice <strong>@newInv</strong> has been created and saved to the Sales Table.
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
 
 <!-- Action Buttons matching Screenshot 2 -->
 <div class="action-bar d-flex gap-2 align-items-center">
+    <a href="@Url.Action("Index", "Pos")" class="btn btn-primary d-inline-flex align-items-center gap-1">
+        <i class="bi bi-cart3"></i> New POS Sale
+    </a>
     <a href="@Url.Action("Create", "Sales")" class="btn btn-theme-new">
         <i class="bi bi-plus-lg"></i> New
     </a>
@@ -164,7 +185,8 @@
                     {
                         var dues = s.DuesAmount > 0 ? s.DuesAmount : (s.GrandTotal > s.PaidAmount ? s.GrandTotal - s.PaidAmount : 0);
                         var finalPay = s.FinalPayable > 0 ? s.FinalPayable : s.GrandTotal;
-                        <tr>
+                        var isHighlighted = Context.Request.Query.ContainsKey("newInvoice") && s.InvoiceNumber == Context.Request.Query["newInvoice"].ToString();
+                        <tr class="@(isHighlighted ? "table-success border-success" : "")">
                             <td>
                                 <input type="checkbox" class="sale-checkbox" value="@s.Id" />
                             </td>

@@ -97,25 +97,83 @@ body {
     border: 1px solid #e2e8f0;
 }
 
-.product-card.selected-active {
+/* Image 1 matching styles */
+.product-card-v2 {
+    background: #ffffff;
+    border-radius: 0.65rem;
+    padding: 0.5rem;
+    cursor: pointer;
+    transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+    border: 1px solid #e2e8f0;
+    display: flex;
+    flex-direction: column;
+}
+
+.product-card-v2:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+    border-color: #93c5fd;
+}
+
+.product-card-v2.selected-active {
     border-color: #2563eb !important;
     background-color: #f8faff !important;
-    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.3) !important;
+    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.28) !important;
 }
 
-.card-selected-indicator {
-    animation: fadeInScale 0.2s ease-in-out;
+.product-img-box {
+    background: #f1f5f9;
+    border-radius: 0.5rem;
+    height: 105px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
 }
 
-@keyframes fadeInScale {
-    from {
-        opacity: 0;
-        transform: scale(0.95);
-    }
-    to {
-        opacity: 1;
-        transform: scale(1);
-    }
+.product-img {
+    max-height: 80px;
+    max-width: 85%;
+    object-fit: contain;
+}
+
+.btn-card-plus {
+    bottom: 5px;
+    right: 5px;
+    width: 22px;
+    height: 22px;
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    color: #475569;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    transition: all 0.15s ease;
+}
+
+.product-card-v2:hover .btn-card-plus {
+    background: #2563eb;
+    color: #ffffff;
+    border-color: #2563eb;
+}
+
+.card-selected-badge {
+    font-size: 0.72rem;
+    font-weight: 700;
+}
+
+.cart-item-row {
+    background: #ffffff;
+    border-bottom: 1px solid #f1f5f9;
+    padding: 6px 0;
+}
+
+.cart-item-row:hover {
+    background: #f8fafc;
 }
 
 .category-pill {

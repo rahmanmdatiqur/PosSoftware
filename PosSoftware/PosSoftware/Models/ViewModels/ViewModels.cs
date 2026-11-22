@@ -36,6 +36,13 @@ namespace PosSoftware.Models.ViewModels
         public decimal Total => (UnitPrice * Quantity) - DiscountAmount;
     }
 
+    public class QuickCustomerDto
+    {
+        public string Name { get; set; } = string.Empty;
+        public string? Phone { get; set; }
+        public string? Address { get; set; }
+    }
+
     public class CheckoutRequestDto
     {
         public int CustomerId { get; set; }
