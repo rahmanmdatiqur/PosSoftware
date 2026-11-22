@@ -7,53 +7,51 @@
     <!-- Left Pane: Product Catalog matching Screenshot 1 -->
     <div class="pos-catalog-pane d-flex flex-column">
         <!-- Top Controls Bar matching Screenshot 1 -->
-        <div class="card border-0 shadow-sm p-3 mb-2 bg-white rounded-3">
+        <div class="card border-0 shadow-sm p-2 mb-2 bg-white rounded-3">
             <!-- Row 1: Code, Editing badge, + New, Invoice link, Date -->
-            <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-2 pb-2 border-bottom">
-                <div class="d-flex align-items-center gap-2">
+            <div class="d-flex flex-wrap align-items-center justify-content-between gap-1 mb-2 pb-2 border-bottom">
+                <div class="d-flex align-items-center gap-1">
                     <span class="text-uppercase text-secondary fw-bold small" style="font-size: 0.72rem; letter-spacing: 0.5px;">Code</span>
                     <span class="font-monospace fw-bold text-dark fs-6" id="posCurrentInvoiceCode">@Model.DefaultInvoiceNumber</span>
                     <span class="badge bg-warning text-dark px-2 py-1 small fw-bold" style="font-size: 0.68rem;">EDITING</span>
-                    <button type="button" class="btn btn-sm btn-outline-secondary px-2 py-1 fw-semibold" onclick="resetPosForNextOrder()" title="Start New Order">
+                    <button type="button" class="btn btn-sm btn-outline-secondary px-2 py-0 fw-semibold" onclick="resetPosForNextOrder()" title="Start New Order">
                         <i class="bi bi-plus-lg"></i> New
                     </button>
-                    <a href="@Url.Action("Index", "Sales")" class="btn btn-sm btn-outline-primary px-2 py-1 fw-semibold">
+                    <a href="@Url.Action("Index", "Sales")" class="btn btn-sm btn-outline-primary px-2 py-0 fw-semibold">
                         <i class="bi bi-receipt"></i> Invoice / Sales List
                     </a>
                 </div>
-                <div class="d-flex align-items-center gap-2">
+                <div class="d-flex align-items-center gap-1">
                     <span class="text-uppercase text-secondary fw-bold small" style="font-size: 0.72rem; letter-spacing: 0.5px;">Date</span>
-                    <div class="input-group input-group-sm" style="width: 150px;">
-                        <input type="date" id="posOrderDate" class="form-control form-control-sm text-center" value="@DateTime.Now.ToString("yyyy-MM-dd")" />
-                    </div>
+                    <input type="date" id="posOrderDate" class="form-control form-control-sm text-center p-1" value="@DateTime.Now.ToString("yyyy-MM-dd")" style="width: 130px; font-size: 0.8rem;" />
                 </div>
             </div>
 
             <!-- Row 2: Search Input, Columns Dropdown, Categories Dropdown matching Screenshot 1 -->
-            <div class="row g-2 align-items-center">
+            <div class="row g-1 align-items-center">
                 <div class="col-md-6">
                     <div class="input-group input-group-sm">
-                        <span class="input-group-text bg-light text-muted border-end-0">
+                        <span class="input-group-text bg-light text-muted border-end-0 py-1">
                             <i class="bi bi-search"></i>
                         </span>
-                        <input type="text" id="posSearchInput" class="form-control bg-light border-start-0" 
-                               placeholder="Search product..." autocomplete="off" />
+                        <input type="text" id="posSearchInput" class="form-control bg-light border-start-0 py-1" 
+                               placeholder="Search product..." autocomplete="off" style="font-size: 0.82rem;" />
                     </div>
                 </div>
                 <div class="col-md-3">
                     <div class="input-group input-group-sm">
-                        <span class="input-group-text bg-light text-muted small" style="font-size: 0.75rem;">COLUMNS</span>
-                        <select id="posColumnsSelect" class="form-select form-select-sm" onchange="changeGridColumns(this.value)">
-                            <option value="row-cols-2 row-cols-sm-3 row-cols-md-4 row-cols-xl-5" selected>5</option>
-                            <option value="row-cols-2 row-cols-sm-2 row-cols-md-3 row-cols-xl-4">4</option>
-                            <option value="row-cols-2 row-cols-sm-3 row-cols-md-4 row-cols-xl-6">6</option>
+                        <span class="input-group-text bg-light text-muted py-1" style="font-size: 0.72rem;">COLUMNS</span>
+                        <select id="posColumnsSelect" class="form-select form-select-sm py-1" onchange="changeGridColumns(this.value)" style="font-size: 0.8rem;">
+                            <option value="row-cols-2 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 row-cols-xl-4 row-cols-xxl-5" selected>4</option>
+                            <option value="row-cols-2 row-cols-sm-3 row-cols-md-4 row-cols-xl-5 row-cols-xxl-6">5</option>
+                            <option value="row-cols-2 row-cols-sm-2 row-cols-md-3 row-cols-xl-3">3</option>
                         </select>
                     </div>
                 </div>
                 <div class="col-md-3">
                     <div class="input-group input-group-sm">
-                        <span class="input-group-text bg-light text-muted small" style="font-size: 0.75rem;">CATEGORIES</span>
-                        <select id="posCategorySelect" class="form-select form-select-sm" onchange="onCategorySelectChange(this.value)">
+                        <span class="input-group-text bg-light text-muted py-1" style="font-size: 0.72rem;">CATEGORIES</span>
+                        <select id="posCategorySelect" class="form-select form-select-sm py-1" onchange="onCategorySelectChange(this.value)" style="font-size: 0.8rem;">
                             <option value="0">All Categories</option>
                             @foreach (var cat in Model.Categories)
                             {
@@ -65,9 +63,9 @@
             </div>
         </div>
 
-        <!-- Product Cards Grid matching Screenshot 1 -->
-        <div class="flex-grow-1 overflow-auto pe-1" id="posCatalogScroll">
-            <div class="row row-cols-2 row-cols-sm-3 row-cols-md-4 row-cols-xl-5 g-3" id="posProductGrid">
+        <!-- Product Cards Grid: overflow-x hidden, g-2 gutter prevents horizontal scrollbar -->
+        <div class="flex-grow-1 pe-1" id="posCatalogScroll" style="overflow-y: auto; overflow-x: hidden;">
+            <div class="row row-cols-2 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 row-cols-xl-4 row-cols-xxl-5 g-2" id="posProductGrid">
                 @foreach (var prod in Model.Products)
                 {
                     <div class="col pos-product-item" 
@@ -103,16 +101,16 @@
                             </div>
 
                             <!-- Under Image: Price on top line, Product Name on bottom line -->
-                            <div class="product-info-box mt-2 text-start">
-                                <div class="fw-bold text-dark fs-6" style="line-height: 1.2;">
+                            <div class="product-info-box mt-1 text-start">
+                                <div class="fw-bold text-dark" style="font-size: 0.9rem; line-height: 1.2;">
                                     ৳ @prod.SellingPrice.ToString("N2")
                                 </div>
-                                <div class="text-secondary text-truncate small mt-1" title="@prod.Name" style="font-size: 0.78rem;">
+                                <div class="text-secondary text-truncate small mt-0" title="@prod.Name" style="font-size: 0.74rem;">
                                     @prod.Name
                                 </div>
-                                <div class="d-flex justify-content-between align-items-center mt-1 text-muted" style="font-size: 0.7rem;">
+                                <div class="d-flex justify-content-between align-items-center mt-1 text-muted" style="font-size: 0.68rem;">
                                     <span>@prod.SKU</span>
-                                    <span class="badge @(prod.CurrentStock <= prod.MinAlertStock ? "bg-danger" : "bg-success")">
+                                    <span class="badge @(prod.CurrentStock <= prod.MinAlertStock ? "bg-danger" : "bg-success") py-0 px-1">
                                         @prod.CurrentStock @(prod.Unit?.ShortCode ?? "pcs")
                                     </span>
                                 </div>
@@ -124,46 +122,46 @@
         </div>
 
         <!-- Pagination Bar matching Screenshot 1 -->
-        <div class="p-2 bg-white rounded-3 mt-2 border-0 shadow-sm d-flex align-items-center justify-content-between small text-muted">
-            <div class="d-flex align-items-center gap-2">
-                <span class="fw-semibold">SHOW</span>
-                <select id="posPageSizeSelect" class="form-select form-select-sm" style="width: 75px;" onchange="changePageSize(this.value)">
+        <div class="p-2 bg-white rounded-3 mt-1 border-0 shadow-sm d-flex align-items-center justify-content-between small text-muted">
+            <div class="d-flex align-items-center gap-1">
+                <span class="fw-semibold" style="font-size: 0.75rem;">SHOW</span>
+                <select id="posPageSizeSelect" class="form-select form-select-sm py-0 px-1" style="width: 65px; font-size: 0.78rem;" onchange="changePageSize(this.value)">
                     <option value="20" selected>20</option>
                     <option value="40">40</option>
                     <option value="80">80</option>
                     <option value="170">All</option>
                 </select>
             </div>
-            <div class="d-flex align-items-center gap-2">
-                <button type="button" class="btn btn-sm btn-outline-secondary px-2 py-0" id="btnPrevPage" onclick="prevCatalogPage()">&lt; Prev</button>
-                <span id="posPaginationInfo">1-20 of @Model.Products.Count</span>
-                <button type="button" class="btn btn-sm btn-outline-secondary px-2 py-0" id="btnNextPage" onclick="nextCatalogPage()">Next &gt;</button>
+            <div class="d-flex align-items-center gap-1">
+                <button type="button" class="btn btn-sm btn-outline-secondary px-2 py-0" id="btnPrevPage" onclick="prevCatalogPage()" style="font-size: 0.78rem;">&lt; Prev</button>
+                <span id="posPaginationInfo" style="font-size: 0.78rem;">1-20 of @Model.Products.Count</span>
+                <button type="button" class="btn btn-sm btn-outline-secondary px-2 py-0" id="btnNextPage" onclick="nextCatalogPage()" style="font-size: 0.78rem;">Next &gt;</button>
             </div>
         </div>
     </div>
 
-    <!-- Right Pane: Order Cart & Checkout matching Screenshot 1 -->
+    <!-- Right Pane: Order Cart & Checkout (Responsive, Scrollable, Always-Visible Save Button) -->
     <div class="pos-cart-pane shadow-sm">
-        <!-- Header: Customer Selector + Counter matching Screenshot 1 -->
-        <div class="p-3 border-bottom bg-white">
-            <div class="row g-2">
+        <!-- Header: Customer Selector + Counter -->
+        <div class="p-2 border-bottom bg-white flex-shrink-0">
+            <div class="row g-1">
                 <div class="col-7">
-                    <label class="form-label small text-muted text-uppercase mb-1" style="font-size: 0.7rem; font-weight: 700; letter-spacing: 0.5px;">Customer</label>
+                    <label class="form-label small text-muted text-uppercase mb-0" style="font-size: 0.68rem; font-weight: 700; letter-spacing: 0.5px;">Customer</label>
                     <div class="input-group input-group-sm">
-                        <select id="posCustomerSelect" class="form-select">
+                        <select id="posCustomerSelect" class="form-select py-1" style="font-size: 0.78rem;">
                             @foreach (var cust in Model.Customers)
                             {
                                 <option value="@cust.Id">@cust.Name (@cust.Phone)</option>
                             }
                         </select>
-                        <button type="button" class="btn btn-outline-secondary" onclick="openAddCustomerQuickModal()" title="Add New Customer">
+                        <button type="button" class="btn btn-outline-secondary px-2 py-1" onclick="openAddCustomerQuickModal()" title="Add Customer">
                             <i class="bi bi-person-plus"></i>
                         </button>
                     </div>
                 </div>
                 <div class="col-5">
-                    <label class="form-label small text-muted text-uppercase mb-1" style="font-size: 0.7rem; font-weight: 700; letter-spacing: 0.5px;">Counter</label>
-                    <select class="form-select form-select-sm" id="posCounterSelect">
+                    <label class="form-label small text-muted text-uppercase mb-0" style="font-size: 0.68rem; font-weight: 700; letter-spacing: 0.5px;">Counter</label>
+                    <select class="form-select form-select-sm py-1" id="posCounterSelect" style="font-size: 0.78rem;">
                         <option value="Counter 1">Counter 1</option>
                         <option value="Main Counter">Main Counter</option>
                     </select>
@@ -171,10 +169,10 @@
             </div>
         </div>
 
-        <!-- Cart Items List matching Screenshot 1 -->
-        <div class="flex-grow-1 overflow-auto p-2" id="cartItemsContainer" style="min-height: 180px;">
-            <div id="cartEmptyPlaceholder" class="text-center text-muted py-5">
-                <i class="bi bi-cart-x fs-1 d-block mb-2"></i>
+        <!-- Cart Items List: Scrollable container -->
+        <div class="p-2 border-bottom bg-white" id="cartItemsContainer" style="max-height: 150px; min-height: 70px; overflow-y: auto;">
+            <div id="cartEmptyPlaceholder" class="text-center text-muted py-3 small">
+                <i class="bi bi-cart-x fs-2 d-block mb-1 text-secondary"></i>
                 Select products from the catalog to build invoice.
             </div>
             <div id="cartItemsList" class="d-none">
@@ -182,100 +180,101 @@
             </div>
         </div>
 
-        <!-- Calculations Summary matching Screenshot 1 -->
-        <div class="p-3 border-top bg-light" style="font-size: 0.88rem;">
-            <div class="d-flex justify-content-between mb-1 text-muted">
-                <span>Sub Total</span>
-                <span class="fw-bold text-dark" id="lblSubtotal">0.00</span>
+        <!-- Calculations Summary & Checkout: Compact Grid matching Screenshot 1 -->
+        <div class="p-2 bg-light flex-grow-1" style="font-size: 0.82rem;">
+            <!-- 2-Column Summary Grid to Save Vertical Space -->
+            <div class="row g-1 small mb-1">
+                <div class="col-6 d-flex justify-content-between align-items-center">
+                    <span class="text-muted">Sub Total:</span>
+                    <span class="fw-semibold text-dark" id="lblSubtotal">0.00</span>
+                </div>
+                <div class="col-6 d-flex justify-content-between align-items-center">
+                    <span class="text-muted">VAT / SD:</span>
+                    <span class="text-dark"><span id="lblTax">0.00</span> / <span id="lblSd">0.00</span></span>
+                </div>
+                <div class="col-6 d-flex justify-content-between align-items-center">
+                    <span class="text-muted">Discount:</span>
+                    <input type="number" step="any" min="0" id="discountAmountInput" class="form-control form-control-sm text-end p-0 px-1" style="width: 70px; height: 22px; font-size: 0.78rem;" value="0.00" oninput="onDiscountAmountInput(this.value)" />
+                </div>
+                <div class="col-6 d-flex justify-content-between align-items-center">
+                    <span class="text-muted">Change:</span>
+                    <span class="fw-bold text-danger" id="lblChangeDue">0.00</span>
+                </div>
             </div>
-            <div class="d-flex justify-content-between mb-1 text-muted">
-                <span>VAT</span>
-                <span class="fw-medium text-dark" id="lblTax">0.00</span>
+
+            <!-- Grand Total Bar -->
+            <div class="d-flex justify-content-between align-items-center py-1 px-2 mb-1 bg-white border rounded shadow-xs">
+                <span class="fw-bold text-dark small">Grand Total:</span>
+                <span class="fw-extrabold text-primary fs-6" id="lblGrandTotal">৳ 0.00</span>
             </div>
-            <div class="d-flex justify-content-between mb-1 text-muted">
-                <span>SD</span>
-                <span class="fw-medium text-dark" id="lblSd">0.00</span>
-            </div>
-            <div class="d-flex justify-content-between align-items-center mb-1 text-muted">
-                <span>Discount</span>
-                <input type="number" step="any" min="0" id="discountAmountInput" class="form-control form-control-sm text-end" style="width: 110px; height: 26px;" value="0.00" oninput="onDiscountAmountInput(this.value)" />
-            </div>
-            <div class="d-flex justify-content-between align-items-center pt-2 border-top mb-1">
-                <span class="fw-bold text-dark">Grand Total</span>
-                <span class="fw-extrabold text-dark fs-6" id="lblGrandTotal">0.00</span>
-            </div>
-            <div class="d-flex justify-content-between mb-1 text-muted">
-                <span>Paid</span>
-                <span class="fw-bold text-dark" id="lblPaid">0.00</span>
-            </div>
-            <div class="d-flex justify-content-between mb-2 text-muted">
-                <span>Change due</span>
-                <span class="fw-bold text-danger" id="lblChangeDue">0.00</span>
+            <div class="d-flex justify-content-between small text-muted mb-1 px-1" style="font-size: 0.75rem;">
+                <span>Total Paid: <strong class="text-dark" id="lblPaid">0.00</strong></span>
+                <span>Remaining: <strong class="text-success" id="lblRemaining">0.00</strong></span>
             </div>
 
             <!-- Payments Section matching Screenshot 1 -->
-            <div class="border-top pt-2 mb-2">
+            <div class="border-top pt-1 mb-1">
                 <div class="d-flex justify-content-between align-items-center mb-1">
-                    <span class="text-uppercase small fw-bold text-secondary" style="font-size: 0.72rem; letter-spacing: 0.5px;">Payments</span>
-                    <a href="javascript:void(0)" class="small text-primary text-decoration-none fw-semibold" onclick="fillRemainingPayment()">Fill remaining</a>
+                    <span class="text-uppercase small fw-bold text-secondary" style="font-size: 0.68rem; letter-spacing: 0.5px;">Payments</span>
+                    <a href="javascript:void(0)" class="small text-primary text-decoration-none fw-semibold" style="font-size: 0.72rem;" onclick="fillRemainingPayment()">Fill remaining</a>
                 </div>
                 <div class="input-group input-group-sm mb-1">
-                    <select id="paymentTypeSelect" class="form-select" style="max-width: 95px;">
+                    <select id="paymentTypeSelect" class="form-select py-0 px-1" style="max-width: 85px; font-size: 0.78rem; height: 26px;">
                         <option value="Cash" selected>CASH</option>
                         <option value="Card">CARD</option>
                         <option value="MobileBanking">MOBILE</option>
                     </select>
-                    <input type="number" step="any" id="paymentAmountInput" class="form-control text-end" placeholder="Amount" />
-                    <button type="button" class="btn btn-success px-3 fw-bold" onclick="addPaymentRow()">Add</button>
+                    <input type="number" step="any" id="paymentAmountInput" class="form-control text-end py-0 px-1" placeholder="Amount" style="font-size: 0.78rem; height: 26px;" />
+                    <button type="button" class="btn btn-success px-2 py-0 fw-bold" onclick="addPaymentRow()" style="font-size: 0.78rem; height: 26px;">Add</button>
                 </div>
                 <div id="addedPaymentsList" class="mb-1">
                     <!-- Added payment rows -->
                 </div>
-                <div class="d-flex justify-content-between small text-muted">
-                    <span>Remaining</span>
-                    <span class="fw-bold text-success" id="lblRemaining">0.00</span>
-                </div>
             </div>
 
             <!-- Reference / Remarks matching Screenshot 1 -->
-            <div class="mb-2">
-                <input type="text" id="posReferenceInput" class="form-control form-control-sm mb-1" placeholder="Reference / NA" value="NA" />
-                <input type="text" id="posRemarksInput" class="form-control form-control-sm" placeholder="Remarks" />
+            <div class="row g-1 mb-2">
+                <div class="col-5">
+                    <input type="text" id="posReferenceInput" class="form-control form-control-sm p-1" placeholder="Ref (NA)" value="NA" style="font-size: 0.75rem; height: 26px;" />
+                </div>
+                <div class="col-7">
+                    <input type="text" id="posRemarksInput" class="form-control form-control-sm p-1" placeholder="Remarks" style="font-size: 0.75rem; height: 26px;" />
+                </div>
             </div>
 
-            <!-- Action Buttons matching Screenshot 1 -->
-            <!-- Button 1: Save Sale (Saves to database and navigates to Sales Table / Index) -->
-            <button type="button" class="btn btn-success w-100 py-2 fw-bold text-white mb-2 shadow-sm d-flex align-items-center justify-content-center gap-2" onclick="saveSaleOrder(false, false)">
-                <i class="bi bi-check-lg fs-5"></i> Save Sale
+            <!-- Action Buttons: 100% PROMINENT & VISIBLE -->
+            <!-- Button 1: Save Sale (Big bold button) -->
+            <button type="button" class="btn btn-success w-100 py-2 fw-bold text-white mb-1 shadow-sm d-flex align-items-center justify-content-center gap-1" onclick="saveSaleOrder(false, false)" style="font-size: 0.95rem;">
+                <i class="bi bi-check-circle-fill fs-5"></i> Save Sale
             </button>
 
             <!-- Row 2: Post, Post & POS Print, POS Print -->
-            <div class="d-flex gap-1 mb-2">
-                <button type="button" class="btn btn-sm btn-light border flex-grow-1 fw-semibold" onclick="saveSaleOrder(true, false)" title="Post Sale">
+            <div class="d-flex gap-1 mb-1">
+                <button type="button" class="btn btn-sm btn-light border flex-grow-1 p-1 small" onclick="saveSaleOrder(true, false)" title="Post Sale" style="font-size: 0.75rem;">
                     <i class="bi bi-printer me-1"></i> Post
                 </button>
-                <button type="button" class="btn btn-sm btn-light border flex-grow-1 fw-semibold" onclick="saveSaleOrder(true, true)" title="Post & Print POS">
-                    <i class="bi bi-printer me-1"></i> Post &amp; POS Print
+                <button type="button" class="btn btn-sm btn-light border flex-grow-1 p-1 small" onclick="saveSaleOrder(true, true)" title="Post & Print POS" style="font-size: 0.75rem;">
+                    <i class="bi bi-printer me-1"></i> Post &amp; Print
                 </button>
-                <button type="button" class="btn btn-sm btn-success flex-grow-1 fw-bold" onclick="saveSaleOrder(false, true)" title="POS Print">
+                <button type="button" class="btn btn-sm btn-success flex-grow-1 p-1 small fw-bold" onclick="saveSaleOrder(false, true)" title="POS Print" style="font-size: 0.75rem;">
                     <i class="bi bi-printer-fill me-1"></i> POS Print
                 </button>
             </div>
 
             <!-- Row 3: Park, Drafts, Clear -->
-            <div class="d-flex gap-1 mb-2">
-                <button type="button" class="btn btn-sm btn-warning text-dark flex-grow-1 fw-semibold" onclick="parkCurrentOrder()" title="Park/Hold this order">
-                    <i class="bi bi-pause-fill me-1"></i> Park
+            <div class="d-flex gap-1 mb-1">
+                <button type="button" class="btn btn-sm btn-warning text-dark flex-grow-1 p-1 small fw-semibold" onclick="parkCurrentOrder()" style="font-size: 0.75rem;">
+                    <i class="bi bi-pause-fill"></i> Park
                 </button>
-                <button type="button" class="btn btn-sm btn-primary flex-grow-1 fw-semibold" onclick="openDraftsModal()" title="View Parked Orders">
-                    <i class="bi bi-folder2-open me-1"></i> Drafts (<span id="draftsCount">0</span>)
+                <button type="button" class="btn btn-sm btn-primary flex-grow-1 p-1 small fw-semibold" onclick="openDraftsModal()" style="font-size: 0.75rem;">
+                    <i class="bi bi-folder2-open"></i> Drafts (<span id="draftsCount">0</span>)
                 </button>
-                <button type="button" class="btn btn-sm btn-outline-danger flex-grow-1 fw-semibold" onclick="clearCart()" title="Clear cart">
-                    <i class="bi bi-x-lg me-1"></i> Clear
+                <button type="button" class="btn btn-sm btn-outline-danger flex-grow-1 p-1 small fw-semibold" onclick="clearCart()" style="font-size: 0.75rem;">
+                    <i class="bi bi-x-lg"></i> Clear
                 </button>
             </div>
 
-            <div class="text-center small text-muted" id="posLastSaleStatus" style="font-size: 0.74rem;">
+            <div class="text-center text-muted" id="posLastSaleStatus" style="font-size: 0.72rem;">
                 Last sale: None
             </div>
         </div>

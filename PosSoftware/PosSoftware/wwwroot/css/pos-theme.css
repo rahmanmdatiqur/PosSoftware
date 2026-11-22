@@ -75,8 +75,9 @@ body {
 
 .pos-container {
     display: flex;
-    gap: 1rem;
-    height: calc(100vh - 120px);
+    gap: 0.75rem;
+    height: calc(100vh - 75px);
+    overflow: hidden;
 }
 
 .pos-catalog-pane {
@@ -84,29 +85,57 @@ body {
     display: flex;
     flex-direction: column;
     min-width: 0;
+    overflow: hidden;
 }
 
 .pos-cart-pane {
-    width: 440px;
-    min-width: 440px;
+    width: 380px;
+    min-width: 330px;
+    max-width: 410px;
     background-color: #ffffff;
-    border-radius: 0.75rem;
+    border-radius: 0.65rem;
     display: flex;
     flex-direction: column;
-    overflow: hidden;
+    overflow-y: auto;
+    overflow-x: hidden;
     border: 1px solid #e2e8f0;
+}
+
+.pos-cart-pane::-webkit-scrollbar {
+    width: 5px;
+}
+.pos-cart-pane::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 4px;
+}
+.pos-cart-pane::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+#posCatalogScroll {
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+}
+
+#posCatalogScroll::-webkit-scrollbar {
+    width: 6px;
+}
+#posCatalogScroll::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 4px;
 }
 
 /* Image 1 matching styles */
 .product-card-v2 {
     background: #ffffff;
-    border-radius: 0.65rem;
-    padding: 0.5rem;
+    border-radius: 0.55rem;
+    padding: 0.4rem;
     cursor: pointer;
     transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
     border: 1px solid #e2e8f0;
     display: flex;
     flex-direction: column;
+    min-width: 0;
 }
 
 .product-card-v2:hover {
@@ -123,8 +152,8 @@ body {
 
 .product-img-box {
     background: #f1f5f9;
-    border-radius: 0.5rem;
-    height: 105px;
+    border-radius: 0.45rem;
+    height: 80px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -133,16 +162,16 @@ body {
 }
 
 .product-img {
-    max-height: 80px;
+    max-height: 65px;
     max-width: 85%;
     object-fit: contain;
 }
 
 .btn-card-plus {
-    bottom: 5px;
-    right: 5px;
-    width: 22px;
-    height: 22px;
+    bottom: 4px;
+    right: 4px;
+    width: 20px;
+    height: 20px;
     background: #ffffff;
     border: 1px solid #cbd5e1;
     border-radius: 50%;
@@ -162,18 +191,34 @@ body {
 }
 
 .card-selected-badge {
-    font-size: 0.72rem;
+    font-size: 0.68rem;
     font-weight: 700;
 }
 
 .cart-item-row {
     background: #ffffff;
     border-bottom: 1px solid #f1f5f9;
-    padding: 6px 0;
+    padding: 3px 0;
 }
 
 .cart-item-row:hover {
     background: #f8fafc;
+}
+
+/* Responsive breakpoint for laptops, tablets, mobile */
+@media (max-width: 991px) {
+    .pos-container {
+        flex-direction: column;
+        height: auto;
+        overflow: visible;
+    }
+    .pos-cart-pane {
+        width: 100%;
+        min-width: 100%;
+        max-width: 100%;
+        height: auto;
+        overflow: visible;
+    }
 }
 
 .category-pill {
