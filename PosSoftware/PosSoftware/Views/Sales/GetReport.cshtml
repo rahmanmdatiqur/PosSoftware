@@ -100,20 +100,25 @@
             line-height: 1.35;
         }
         .header-meta {
-            display: flex;
-            align-items: center;
-            justify-content: flex-end;
-            gap: 20px;
+            text-align: right;
             font-size: 9.5pt;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            justify-content: flex-start;
         }
         .barcode-box {
-            display: flex;
-            align-items: center;
-            margin-bottom: 0;
+            display: block;
+            margin-bottom: 4px;
+            text-align: right;
         }
         .meta-details {
             text-align: right;
             line-height: 1.45;
+            white-space: nowrap;
+        }
+        .nowrap {
+            white-space: nowrap;
         }
         .invoice-title {
             text-align: center;
@@ -267,8 +272,8 @@
                     @Html.Raw(ViewBag.BarcodeSvg)
                 </div>
                 <div class="meta-details">
-                    <div><b>Bill No :</b> @Model.InvoiceNumber</div>
-                    <div><b>Sale Date :</b> @Model.SaleDate.ToString("yyyy-MM-dd")</div>
+                    <div class="nowrap"><b>Bill No :</b> @Model.InvoiceNumber</div>
+                    <div class="nowrap"><b>Sale Date :</b> @Model.SaleDate.ToString("yyyy-MM-dd")</div>
                 </div>
             </div>
         </div>
@@ -361,19 +366,6 @@
         <div class="report-footer">
             <div>
                 Printed Date : @DateTime.Now.ToString("MM/dd/yyyy, h:mm:ss tt")
-            </div>
-
-            <div style="text-align: center;">
-                <svg width="42" height="42" viewBox="0 0 100 100">
-                    <rect width="100" height="100" fill="#fff" stroke="#000" stroke-width="2"/>
-                    <rect x="10" y="10" width="25" height="25" fill="#000"/>
-                    <rect x="65" y="10" width="25" height="25" fill="#000"/>
-                    <rect x="10" y="65" width="25" height="25" fill="#000"/>
-                    <rect x="42" y="42" width="16" height="16" fill="#000"/>
-                    <rect x="42" y="15" width="8" height="18" fill="#000"/>
-                    <rect x="15" y="42" width="18" height="8" fill="#000"/>
-                    <rect x="68" y="68" width="18" height="18" fill="#000"/>
-                </svg>
             </div>
 
             <div style="text-align: right;">
