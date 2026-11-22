@@ -685,7 +685,17 @@ function saveSaleOrder(isPosted = true, shouldPrint = false) {
                 // If POS Print is requested, show print modal with option to view Sales Table
                 document.getElementById('modalInvoiceNo').innerText = data.invoiceNumber;
                 const iframe = document.getElementById('posInvoiceFrame');
-                if (iframe) iframe.src = `/Sales/GetReport/${data.saleId}`;
+                if (iframe) {
+                    iframe.onload = function() {
+                        try {
+                            iframe.contentWindow.focus();
+                            iframe.contentWindow.print();
+                        } catch (e) {
+                            console.log('Auto print trigger:', e);
+                        }
+                    };
+                    iframe.src = `/Sales/GetReport/${data.saleId}`;
+                }
                 const modalEl = document.getElementById('posInvoiceModal');
                 if (modalEl) bootstrap.Modal.getOrCreateInstance(modalEl).show();
 
