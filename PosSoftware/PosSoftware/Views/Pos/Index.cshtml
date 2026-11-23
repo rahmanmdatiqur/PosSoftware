@@ -193,10 +193,14 @@
                     <span class="text-dark"><span id="lblTax">0.00</span> / <span id="lblSd">0.00</span></span>
                 </div>
                 <div class="col-6 d-flex justify-content-between align-items-center">
-                    <span class="text-muted">Discount:</span>
-                    <input type="number" step="any" min="0" id="discountAmountInput" class="form-control form-control-sm text-end p-0 px-1" style="width: 70px; height: 22px; font-size: 0.78rem;" value="0.00" oninput="onDiscountAmountInput(this.value)" />
+                    <span class="text-muted" style="font-size: 0.75rem;">Discount %:</span>
+                    <input type="number" step="any" min="0" max="100" id="discountPercentInput" class="form-control form-control-sm text-end p-0 px-1" style="width: 65px; height: 22px; font-size: 0.78rem;" value="0" placeholder="0" oninput="onDiscountPercentInput(this.value)" />
                 </div>
                 <div class="col-6 d-flex justify-content-between align-items-center">
+                    <span class="text-muted" style="font-size: 0.75rem;">Discount Amt:</span>
+                    <input type="number" step="any" min="0" id="discountAmountInput" class="form-control form-control-sm text-end p-0 px-1" style="width: 65px; height: 22px; font-size: 0.78rem;" value="0.00" placeholder="0.00" oninput="onDiscountAmountInput(this.value)" />
+                </div>
+                <div class="col-12 d-flex justify-content-between align-items-center mt-1">
                     <span class="text-muted">Change:</span>
                     <span class="fw-bold text-danger" id="lblChangeDue">0.00</span>
                 </div>
@@ -242,40 +246,19 @@
                 </div>
             </div>
 
-            <!-- Action Buttons: 100% PROMINENT & VISIBLE -->
-            <!-- Button 1: Save Sale (Big bold button) -->
-            <button type="button" class="btn btn-success w-100 py-2 fw-bold text-white mb-1 shadow-sm d-flex align-items-center justify-content-center gap-1" onclick="saveSaleOrder(false, false)" style="font-size: 0.95rem;">
-                <i class="bi bi-check-circle-fill fs-5"></i> Save Sale
-            </button>
-
-            <!-- Row 2: Post, Post & POS Print, POS Print -->
-            <div class="d-flex gap-1 mb-1">
-                <button type="button" class="btn btn-sm btn-light border flex-grow-1 p-1 small" onclick="saveSaleOrder(true, false)" title="Post Sale" style="font-size: 0.75rem;">
-                    <i class="bi bi-printer me-1"></i> Post
+            <!-- Action Buttons: Only Save, Clear, and Print as requested -->
+            <div class="pos-action-buttons mt-2">
+                <button type="button" class="btn btn-success w-100 py-2 fw-bold text-white mb-2 shadow-sm d-flex align-items-center justify-content-center gap-2" onclick="saveSaleOrder(false, false)" style="font-size: 1rem; border-radius: 8px;">
+                    <i class="bi bi-check-circle-fill fs-5"></i> Save
                 </button>
-                <button type="button" class="btn btn-sm btn-light border flex-grow-1 p-1 small" onclick="saveSaleOrder(true, true)" title="Post & Print POS" style="font-size: 0.75rem;">
-                    <i class="bi bi-printer me-1"></i> Post &amp; Print
-                </button>
-                <button type="button" class="btn btn-sm btn-success flex-grow-1 p-1 small fw-bold" onclick="saveSaleOrder(false, true)" title="POS Print" style="font-size: 0.75rem;">
-                    <i class="bi bi-printer-fill me-1"></i> POS Print
-                </button>
-            </div>
-
-            <!-- Row 3: Park, Drafts, Clear -->
-            <div class="d-flex gap-1 mb-1">
-                <button type="button" class="btn btn-sm btn-warning text-dark flex-grow-1 p-1 small fw-semibold" onclick="parkCurrentOrder()" style="font-size: 0.75rem;">
-                    <i class="bi bi-pause-fill"></i> Park
-                </button>
-                <button type="button" class="btn btn-sm btn-primary flex-grow-1 p-1 small fw-semibold" onclick="openDraftsModal()" style="font-size: 0.75rem;">
-                    <i class="bi bi-folder2-open"></i> Drafts (<span id="draftsCount">0</span>)
-                </button>
-                <button type="button" class="btn btn-sm btn-outline-danger flex-grow-1 p-1 small fw-semibold" onclick="clearCart()" style="font-size: 0.75rem;">
-                    <i class="bi bi-x-lg"></i> Clear
-                </button>
-            </div>
-
-            <div class="text-center text-muted" id="posLastSaleStatus" style="font-size: 0.72rem;">
-                Last sale: None
+                <div class="d-flex gap-2">
+                    <button type="button" class="btn btn-danger flex-fill py-2 fw-bold text-white shadow-sm d-flex align-items-center justify-content-center gap-2" onclick="clearCart()" title="Clear Cart" style="font-size: 0.92rem; border-radius: 8px;">
+                        <i class="bi bi-trash3-fill fs-5"></i> Clear
+                    </button>
+                    <button type="button" class="btn btn-primary flex-fill py-2 fw-bold text-white shadow-sm d-flex align-items-center justify-content-center gap-2" onclick="saveSaleOrder(false, true)" title="Print Invoice" style="font-size: 0.92rem; border-radius: 8px;">
+                        <i class="bi bi-printer-fill fs-5"></i> Print
+                    </button>
+                </div>
             </div>
         </div>
     </div>

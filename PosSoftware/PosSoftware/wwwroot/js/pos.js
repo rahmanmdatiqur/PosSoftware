@@ -3,6 +3,7 @@ let payments = [];
 let taxRate = 0.0;
 let sdRate = 0.0;
 let discountAmount = 0.0;
+let discountPercent = 0.0;
 let paymentMethod = 'Cash';
 
 // Catalog Pagination & Filter State matching Screenshot 1
@@ -261,8 +262,11 @@ function clearCart() {
     cart = [];
     payments = [];
     discountAmount = 0.0;
+    discountPercent = 0.0;
     const discInput = document.getElementById('discountAmountInput');
     if (discInput) discInput.value = '0.00';
+    const discPctInput = document.getElementById('discountPercentInput');
+    if (discPctInput) discPctInput.value = '0';
     renderCart();
     renderPaymentsList();
     updateCatalogSelectionIndicators();
@@ -338,16 +342,48 @@ function updateCatalogSelectionIndicators() {
 }
 
 // -------------------------------------------------------------
-// Totals & Calculations matching Screenshot 1
+// Totals & Calculations with Discount % and Discount Amount
 // -------------------------------------------------------------
+
+function onDiscountPercentInput(val) {
+    discountPercent = parseFloat(val) || 0.0;
+    if (discountPercent < 0) discountPercent = 0.0;
+    if (discountPercent > 100) discountPercent = 100.0;
+
+    const subtotal = cart.reduce((sum, item) => sum + (item.unitPrice * item.quantity), 0);
+    discountAmount = (subtotal * discountPercent) / 100.0;
+
+    const discAmtInput = document.getElementById('discountAmountInput');
+    if (discAmtInput) discAmtInput.value = discountAmount.toFixed(2);
+
+    calculateTotals();
+}
 
 function onDiscountAmountInput(val) {
     discountAmount = parseFloat(val) || 0.0;
+    if (discountAmount < 0) discountAmount = 0.0;
+
+    const subtotal = cart.reduce((sum, item) => sum + (item.unitPrice * item.quantity), 0);
+    discountPercent = subtotal > 0 ? (discountAmount / subtotal) * 100.0 : 0.0;
+
+    const discPctInput = document.getElementById('discountPercentInput');
+    if (discPctInput) discPctInput.value = discountPercent > 0 ? discountPercent.toFixed(1) : '0';
+
     calculateTotals();
 }
 
 function calculateTotals() {
     const subtotal = cart.reduce((sum, item) => sum + (item.unitPrice * item.quantity), 0);
+
+    // If discount % was entered, keep amount synchronized with subtotal changes
+    if (discountPercent > 0) {
+        discountAmount = (subtotal * discountPercent) / 100.0;
+        const discAmtInput = document.getElementById('discountAmountInput');
+        if (discAmtInput && document.activeElement !== discAmtInput) {
+            discAmtInput.value = discountAmount.toFixed(2);
+        }
+    }
+
     const taxableAmount = Math.max(0, subtotal - discountAmount);
     const vatAmount = (taxableAmount * (taxRate / 100));
     const sdAmount = (taxableAmount * (sdRate / 100));
@@ -644,7 +680,7 @@ function saveSaleOrder(isPosted = true, shouldPrint = false) {
         SubTotal: subtotal,
         TaxRate: taxRate,
         TaxAmount: vatAmount,
-        DiscountPercent: 0,
+        DiscountPercent: discountPercent,
         DiscountAmount: discountAmount,
         GrandTotal: grandTotal,
         PaidAmount: paidAmount > 0 ? paidAmount : grandTotal,

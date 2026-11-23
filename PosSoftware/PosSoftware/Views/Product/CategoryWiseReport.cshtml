@@ -241,7 +241,7 @@
                 <div>Mobile : <span class="dots" style="min-width: 190px;">&nbsp;</span></div>
             </div>
             <div class="meta-right">
-                <div>Date : <span class="dots" style="min-width: 90px;">@DateTime.Now.ToString("dd/MM/yyyy")</span></div>
+                <div>Date : <span class="dots" style="min-width: 120px;">&nbsp;</span></div>
                 @if (!string.IsNullOrEmpty(selectedCatName))
                 {
                     <div class="mt-1 text-primary fw-bold" style="font-size: 7.5pt;">Category: @selectedCatName</div>
@@ -277,11 +277,10 @@
                                         <td colspan="5">@currentCatLeft</td>
                                     </tr>
                                 }
-                                decimal displayPrice = item.SellingPrice > 0 ? item.SellingPrice : item.CostPrice;
                                 <tr>
                                     <td class="col-sl">@slNo</td>
                                     <td class="col-name" title="@item.SKU">@item.Name</td>
-                                    <td class="col-price" data-price="@displayPrice">@(displayPrice > 0 ? displayPrice.ToString("0.##") : "")</td>
+                                    <td class="col-price"></td>
                                     <td class="col-qty">
                                         <input type="text" class="qty-input" data-sl="@slNo" oninput="calculateRow(this)" />
                                     </td>
@@ -319,11 +318,10 @@
                                         <td colspan="5">@currentCatRight</td>
                                     </tr>
                                 }
-                                decimal displayPrice = item.SellingPrice > 0 ? item.SellingPrice : item.CostPrice;
                                 <tr>
                                     <td class="col-sl">@slNo</td>
                                     <td class="col-name" title="@item.SKU">@item.Name</td>
-                                    <td class="col-price" data-price="@displayPrice">@(displayPrice > 0 ? displayPrice.ToString("0.##") : "")</td>
+                                    <td class="col-price"></td>
                                     <td class="col-qty">
                                         <input type="text" class="qty-input" data-sl="@slNo" oninput="calculateRow(this)" />
                                     </td>
