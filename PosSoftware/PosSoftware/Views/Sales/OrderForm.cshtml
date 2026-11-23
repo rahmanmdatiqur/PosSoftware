@@ -1,27 +1,23 @@
 @model List<PosSoftware.Models.Entities.Product>
 @{
     Layout = null;
-    var leftItems = Model.Where(p => {
-        if (p.SKU.StartsWith("ASM-") && int.TryParse(p.SKU.Substring(4), out int sl)) {
-            return sl <= 90;
-        }
-        return false;
-    }).OrderBy(p => p.SKU).ToList();
+    int totalCount = Model.Count;
+    int half = (int)Math.Ceiling(totalCount / 2.0);
+    var leftItems = Model.Take(half).ToList();
+    var rightItems = Model.Skip(half).ToList();
 
-    var rightItems = Model.Where(p => {
-        if (p.SKU.StartsWith("ASM-") && int.TryParse(p.SKU.Substring(4), out int sl)) {
-            return sl > 90 && sl <= 170;
-        }
-        return false;
-    }).OrderBy(p => p.SKU).ToList();
+    var allCategories = ViewBag.Categories as List<PosSoftware.Models.Entities.Category> ?? new List<PosSoftware.Models.Entities.Category>();
+    int? selectedCatId = ViewBag.SelectedCategoryId as int?;
+    string selectedCatName = ViewBag.SelectedCategoryName as string ?? "";
 }
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>ASM ENTERPRISE - Order Form</title>
+    <title>ASM ENTERPRISE - Order Form @(string.IsNullOrEmpty(selectedCatName) ? "" : $"({selectedCatName})")</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" />
     <style>
         @@page {
             size: A4 portrait;
@@ -33,7 +29,7 @@
             color: #000;
             background: #f1f5f9;
             margin: 0;
-            padding: 15px;
+            padding: 12px;
         }
         .no-print-bar {
             max-width: 210mm;
@@ -41,21 +37,26 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            gap: 10px;
+            background: #fff;
+            padding: 8px 12px;
+            border-radius: 8px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.08);
         }
         .order-sheet {
             max-width: 210mm;
             margin: 0 auto;
             background: #fff;
-            padding: 12mm 10mm;
+            padding: 8mm 8mm;
             box-shadow: 0 4px 15px rgba(0,0,0,0.1);
             border: 1px solid #cbd5e1;
         }
         .company-header {
             text-align: center;
-            margin-bottom: 8px;
+            margin-bottom: 6px;
         }
         .company-name {
-            font-size: 18pt;
+            font-size: 19pt;
             font-weight: 900;
             color: #004085;
             letter-spacing: 0.5px;
@@ -74,7 +75,7 @@
             color: #fff;
             font-size: 9pt;
             font-weight: bold;
-            padding: 2px 18px;
+            padding: 2px 20px;
             border-radius: 12px;
             margin-top: 4px;
             letter-spacing: 0.5px;
@@ -91,7 +92,7 @@
             flex: 1;
         }
         .meta-right {
-            width: 140px;
+            width: 170px;
             text-align: right;
         }
         .dots {
@@ -188,20 +189,42 @@
 </head>
 <body>
 
+    <!-- Control Bar (hidden during printing) -->
     <div class="no-print-bar">
-        <a href="@Url.Action("Index", "Sales")" class="btn btn-sm btn-outline-secondary">
-            &larr; Back to Sales
-        </a>
-        <div class="d-flex gap-2">
-            <button onclick="window.print()" class="btn btn-sm btn-primary">
-                🖨️ Print Order Form
+        <div class="d-flex align-items-center gap-2">
+            <a href="@Url.Action("Index", "Sales")" class="btn btn-sm btn-outline-secondary d-flex align-items-center gap-1">
+                <i class="bi bi-arrow-left"></i> Sales Index
+            </a>
+            <select class="form-select form-select-sm" style="width: 220px;" onchange="filterByCategory(this.value)">
+                <option value="">-- All Categories (@totalCount) --</option>
+                @foreach (var c in allCategories)
+                {
+                    if (selectedCatId.HasValue && selectedCatId.Value == c.Id)
+                    {
+                        <option value="@c.Id" selected>@c.Name</option>
+                    }
+                    else
+                    {
+                        <option value="@c.Id">@c.Name</option>
+                    }
+                }
+            </select>
+        </div>
+
+        <div class="d-flex align-items-center gap-2">
+            <span class="badge bg-light text-dark border">
+                Total Items: <strong>@totalCount</strong>
+            </span>
+            <button onclick="window.print()" class="btn btn-sm btn-primary d-flex align-items-center gap-1">
+                <i class="bi bi-printer"></i> Print Order Form
             </button>
             <button onclick="clearQuantities()" class="btn btn-sm btn-outline-danger">
-                Reset Quantities
+                Reset
             </button>
         </div>
     </div>
 
+    <!-- Printable Sheet matching Physical Form (Screenshot 2) -->
     <div class="order-sheet">
         <!-- Header -->
         <div class="company-header">
@@ -213,18 +236,22 @@
         <!-- Customer Metadata -->
         <div class="customer-meta">
             <div class="meta-left">
-                <div>Name : <span class="dots" style="min-width: 250px;">&nbsp;</span></div>
-                <div>Address : <span class="dots" style="min-width: 240px;">&nbsp;</span></div>
-                <div>Mobile : <span class="dots" style="min-width: 180px;">&nbsp;</span></div>
+                <div>Name : <span class="dots" style="min-width: 260px;">&nbsp;</span></div>
+                <div>Address : <span class="dots" style="min-width: 250px;">&nbsp;</span></div>
+                <div>Mobile : <span class="dots" style="min-width: 190px;">&nbsp;</span></div>
             </div>
             <div class="meta-right">
                 <div>Date : <span class="dots" style="min-width: 90px;">@DateTime.Now.ToString("dd/MM/yyyy")</span></div>
+                @if (!string.IsNullOrEmpty(selectedCatName))
+                {
+                    <div class="mt-1 text-primary fw-bold" style="font-size: 7.5pt;">Category: @selectedCatName</div>
+                }
             </div>
         </div>
 
         <!-- 2-Column Tables -->
         <div class="columns-container">
-            <!-- Left Column: Items 1 to 90 -->
+            <!-- Left Column: Items 1 to Half -->
             <div>
                 <table class="order-table">
                     <thead>
@@ -239,9 +266,9 @@
                     <tbody>
                         @{
                             string currentCatLeft = "";
+                            int slNo = 1;
                             foreach (var item in leftItems)
                             {
-                                int.TryParse(item.SKU.Replace("ASM-", ""), out int slNo);
                                 var cat = item.Category?.Name ?? "General";
                                 if (cat != currentCatLeft)
                                 {
@@ -250,22 +277,24 @@
                                         <td colspan="5">@currentCatLeft</td>
                                     </tr>
                                 }
+                                decimal displayPrice = item.SellingPrice > 0 ? item.SellingPrice : item.CostPrice;
                                 <tr>
                                     <td class="col-sl">@slNo</td>
-                                    <td class="col-name">@item.Name</td>
-                                    <td class="col-price" data-price="@item.CostPrice">@item.CostPrice.ToString("0.##")</td>
+                                    <td class="col-name" title="@item.SKU">@item.Name</td>
+                                    <td class="col-price" data-price="@displayPrice">@(displayPrice > 0 ? displayPrice.ToString("0.##") : "")</td>
                                     <td class="col-qty">
                                         <input type="text" class="qty-input" data-sl="@slNo" oninput="calculateRow(this)" />
                                     </td>
                                     <td class="col-val row-val" id="val-@slNo"></td>
                                 </tr>
+                                slNo++;
                             }
                         }
                     </tbody>
                 </table>
             </div>
 
-            <!-- Right Column: Items 91 to 170 -->
+            <!-- Right Column: Items (Half + 1) to Total -->
             <div>
                 <table class="order-table">
                     <thead>
@@ -282,7 +311,6 @@
                             string currentCatRight = "";
                             foreach (var item in rightItems)
                             {
-                                int.TryParse(item.SKU.Replace("ASM-", ""), out int slNo);
                                 var cat = item.Category?.Name ?? "General";
                                 if (cat != currentCatRight)
                                 {
@@ -291,15 +319,17 @@
                                         <td colspan="5">@currentCatRight</td>
                                     </tr>
                                 }
+                                decimal displayPrice = item.SellingPrice > 0 ? item.SellingPrice : item.CostPrice;
                                 <tr>
                                     <td class="col-sl">@slNo</td>
-                                    <td class="col-name">@item.Name</td>
-                                    <td class="col-price" data-price="@item.CostPrice">@item.CostPrice.ToString("0.##")</td>
+                                    <td class="col-name" title="@item.SKU">@item.Name</td>
+                                    <td class="col-price" data-price="@displayPrice">@(displayPrice > 0 ? displayPrice.ToString("0.##") : "")</td>
                                     <td class="col-qty">
                                         <input type="text" class="qty-input" data-sl="@slNo" oninput="calculateRow(this)" />
                                     </td>
                                     <td class="col-val row-val" id="val-@slNo"></td>
                                 </tr>
+                                slNo++;
                             }
                         }
                     </tbody>
@@ -317,13 +347,21 @@
     </div>
 
     <script>
+        function filterByCategory(catId) {
+            if (catId) {
+                window.location.href = '@Url.Action("OrderForm", "Sales")?categoryId=' + encodeURIComponent(catId);
+            } else {
+                window.location.href = '@Url.Action("OrderForm", "Sales")';
+            }
+        }
+
         function calculateRow(input) {
             const row = input.closest('tr');
             const priceCell = row.querySelector('.col-price');
             const valCell = row.querySelector('.col-val');
             const price = parseFloat(priceCell.getAttribute('data-price')) || 0;
             const qty = parseFloat(input.value) || 0;
-            if (qty > 0) {
+            if (qty > 0 && price > 0) {
                 valCell.innerText = (price * qty).toFixed(2);
             } else {
                 valCell.innerText = '';
@@ -337,4 +375,3 @@
     </script>
 </body>
 </html>
-

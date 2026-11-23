@@ -69,6 +69,51 @@ namespace PosSoftware.Controllers
         }
 
         [HttpGet]
+        [AuthorizePermission("Products", "View")]
+        public async Task<IActionResult> CategoryWiseReport(int? categoryId, string? search)
+        {
+            var q = _context.Products
+                .Include(p => p.Category)
+                .Include(p => p.Unit)
+                .Where(p => p.IsActive)
+                .AsQueryable();
+
+            if (categoryId.HasValue && categoryId.Value > 0)
+            {
+                q = q.Where(p => p.CategoryId == categoryId.Value);
+                ViewBag.SelectedCategoryName = await _context.Categories
+                    .Where(c => c.Id == categoryId.Value)
+                    .Select(c => c.Name)
+                    .FirstOrDefaultAsync();
+            }
+
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                var term = search.Trim().ToLower();
+                q = q.Where(p => p.Name.ToLower().Contains(term) 
+                              || (p.GenericName != null && p.GenericName.ToLower().Contains(term))
+                              || p.Barcode.ToLower().Contains(term) 
+                              || p.SKU.ToLower().Contains(term));
+                ViewBag.SearchTerm = search;
+            }
+
+            var products = await q
+                .OrderBy(p => p.Category != null ? p.Category.Name : "")
+                .ThenBy(p => p.SKU)
+                .ThenBy(p => p.Name)
+                .ToListAsync();
+
+            ViewBag.Categories = await _context.Categories
+                .Where(c => c.IsActive)
+                .OrderBy(c => c.Name)
+                .ToListAsync();
+
+            ViewBag.SelectedCategoryId = categoryId;
+
+            return View(products);
+        }
+
+        [HttpGet]
         [AuthorizePermission("Products", "Create")]
         public async Task<IActionResult> Create()
         {

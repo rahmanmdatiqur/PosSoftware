@@ -291,13 +291,34 @@ namespace PosSoftware.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> OrderForm()
+        public async Task<IActionResult> OrderForm(int? categoryId)
         {
-            var products = await _context.Products
+            var q = _context.Products
                 .Include(p => p.Category)
                 .Where(p => p.IsActive)
-                .OrderBy(p => p.SKU)
+                .AsQueryable();
+
+            if (categoryId.HasValue && categoryId.Value > 0)
+            {
+                q = q.Where(p => p.CategoryId == categoryId.Value);
+                ViewBag.SelectedCategoryName = await _context.Categories
+                    .Where(c => c.Id == categoryId.Value)
+                    .Select(c => c.Name)
+                    .FirstOrDefaultAsync();
+            }
+
+            var products = await q
+                .OrderBy(p => p.Category != null ? p.Category.Name : "")
+                .ThenBy(p => p.SKU)
+                .ThenBy(p => p.Name)
                 .ToListAsync();
+
+            ViewBag.Categories = await _context.Categories
+                .Where(c => c.IsActive)
+                .OrderBy(c => c.Name)
+                .ToListAsync();
+
+            ViewBag.SelectedCategoryId = categoryId;
 
             return View(products);
         }
