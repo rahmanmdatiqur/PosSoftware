@@ -192,8 +192,8 @@ namespace PosSoftware.Controllers
                 DuesAmount = dues,
                 ChangeAmount = dto.ChangeAmount,
                 PaymentMethod = dto.PaymentMethod ?? "Cash",
-                Status = "Completed",
-                IsPosted = true,
+                Status = "Unposted",
+                IsPosted = false,
                 Notes = dto.Notes,
                 CashierId = cashierId
             };

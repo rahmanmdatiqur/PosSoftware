@@ -56,6 +56,7 @@ namespace PosSoftware.Controllers
                     existing.Phone = customer.Phone;
                     existing.Email = customer.Email;
                     existing.Address = customer.Address;
+                    existing.LoyaltyPoints = customer.LoyaltyPoints;
                     existing.IsActive = customer.IsActive;
                     await _context.SaveChangesAsync();
                     TempData["SuccessMessage"] = $"Customer '{customer.Name}' updated!";

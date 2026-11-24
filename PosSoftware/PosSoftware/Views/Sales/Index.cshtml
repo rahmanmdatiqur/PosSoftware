@@ -189,9 +189,12 @@
                             </td>
                             <td>
                                 <div class="d-flex gap-1">
-                                    <a href="@Url.Action("Details", "Sales", new { id = s.Id })" class="btn-action-edit" title="View / Edit">
-                                        <i class="bi bi-pencil-fill"></i>
-                                    </a>
+                                    @if (!s.IsPosted)
+                                    {
+                                        <a href="@Url.Action("Edit", "Sales", new { id = s.Id })" class="btn-action-edit" title="Edit Sale">
+                                            <i class="bi bi-pencil-fill"></i>
+                                        </a>
+                                    }
                                     <a href="@Url.Action("GetReport", "Sales", new { id = s.Id })" class="btn-action-report" title="HTML Report / Invoice Print">
                                         <i class="bi bi-file-earmark-text-fill"></i>
                                     </a>
@@ -204,7 +207,14 @@
                             <td class="fw-bold">@finalPay.ToString("N0")</td>
                             <td class="@(dues > 0 ? "text-danger fw-bold" : "")">@dues.ToString("N0")</td>
                             <td>
-                                <span class="text-secondary fw-semibold">@(s.IsPosted ? "Posted" : "Draft")</span>
+                                @if (s.IsPosted)
+                                {
+                                    <span class="badge bg-success fw-semibold"><i class="bi bi-check-circle me-1"></i>Posted</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-warning text-dark fw-semibold"><i class="bi bi-clock me-1"></i>Unposted</span>
+                                }
                             </td>
                         </tr>
                     }
@@ -222,21 +232,39 @@
     }
 
     function bulkPostSales() {
-        const checked = Array.from(document.querySelectorAll('.sale-checkbox:checked')).map(cb => cb.value);
+        const checked = Array.from(document.querySelectorAll('.sale-checkbox:checked')).map(cb => parseInt(cb.value));
         if (checked.length === 0) {
             Swal.fire('Info', 'Please select at least one invoice to post.', 'info');
             return;
         }
         Swal.fire({
             title: 'Post Invoices?',
-            text: `Are you sure you want to mark ${checked.length} invoice(s) as Posted?`,
+            text: `Are you sure you want to mark ${checked.length} invoice(s) as Posted? Once posted, their update button will be hidden and they cannot be edited.`,
             icon: 'question',
             showCancelButton: true,
             confirmButtonText: 'Yes, Post',
-            confirmButtonColor: '#ffc107'
-        }).then((res) => {
+            confirmButtonColor: '#ffc107',
+            cancelButtonText: 'Cancel'
+        }).then(async (res) => {
             if (res.isConfirmed) {
-                Swal.fire('Success', 'Invoices posted successfully!', 'success');
+                try {
+                    const resp = await fetch('@Url.Action("BulkPost", "Sales")', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(checked)
+                    });
+                    const result = await resp.json();
+                    if (result.success) {
+                        Swal.fire('Success', result.message || 'Invoices posted successfully!', 'success')
+                            .then(() => location.reload());
+                    } else {
+                        Swal.fire('Error', result.message || 'Failed to post invoices.', 'error');
+                    }
+                } catch (e) {
+                    Swal.fire('Error', 'Server error while posting.', 'error');
+                }
             }
         });
     }

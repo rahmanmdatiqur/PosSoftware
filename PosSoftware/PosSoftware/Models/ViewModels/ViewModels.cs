@@ -167,6 +167,7 @@ namespace PosSoftware.Models.ViewModels
 
     public class SaleEntryViewModel
     {
+        public int Id { get; set; }
         public string InvoiceNo { get; set; } = string.Empty;
         public DateTime SaleDate { get; set; } = DateTime.UtcNow;
         public int CustomerId { get; set; } = 1;
@@ -203,6 +204,7 @@ namespace PosSoftware.Models.ViewModels
 
     public class PurchaseEntryViewModel
     {
+        public int Id { get; set; }
         public string PurchaseNo { get; set; } = string.Empty;
         public int SupplierId { get; set; }
         public DateTime PurchaseDate { get; set; } = DateTime.UtcNow;

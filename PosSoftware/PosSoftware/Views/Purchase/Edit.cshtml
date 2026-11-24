@@ -1,0 +1,577 @@
+@model PosSoftware.Models.ViewModels.PurchaseEntryViewModel
+@{
+    ViewData["Title"] = "Edit Purchase - " + Model.PurchaseNo;
+    var suppliers = ViewBag.Suppliers as List<PosSoftware.Models.Entities.Supplier> ?? new List<PosSoftware.Models.Entities.Supplier>();
+    var categories = ViewBag.Categories as List<PosSoftware.Models.Entities.Category> ?? new List<PosSoftware.Models.Entities.Category>();
+}
+
+<style>
+    .page-title {
+        font-size: 1.35rem;
+        font-weight: 700;
+        color: #212529;
+        margin-bottom: 12px;
+    }
+    .panel-box {
+        background: #fff;
+        border: 1px solid #dcdcdc;
+        border-radius: 4px;
+        margin-bottom: 18px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    }
+    .panel-header {
+        background-color: #546e7a;
+        color: #ffffff;
+        padding: 8px 14px;
+        font-size: 0.88rem;
+        font-weight: 600;
+        border-top-left-radius: 4px;
+        border-top-right-radius: 4px;
+    }
+    .panel-body {
+        padding: 14px 16px;
+    }
+    .form-label-custom {
+        font-size: 0.82rem;
+        font-weight: 600;
+        color: #374151;
+        margin-bottom: 4px;
+    }
+    .form-control-custom, .form-select-custom {
+        font-size: 0.85rem;
+        padding: 5px 8px;
+        border: 1px solid #cbd5e1;
+        border-radius: 4px;
+    }
+    .table-details thead th {
+        background-color: #e8eef3;
+        color: #374151;
+        font-size: 0.82rem;
+        font-weight: 600;
+        border-bottom: 1px solid #cbd5e1;
+        padding: 7px 8px;
+        white-space: nowrap;
+    }
+    .table-details tbody td {
+        font-size: 0.84rem;
+        padding: 6px 8px;
+        vertical-align: middle;
+        border-bottom: 1px solid #f1f5f9;
+    }
+    .modal-product-table thead th {
+        background-color: #f1f5f9;
+        font-size: 0.82rem;
+        font-weight: 600;
+        color: #0369a1;
+        border-bottom: 1px solid #cbd5e1;
+    }
+    .modal-product-table tbody tr {
+        cursor: pointer;
+        transition: background-color 0.15s;
+    }
+    .modal-product-table tbody tr:hover {
+        background-color: #e0f2fe;
+    }
+</style>
+
+<!-- Title & Top Update Button -->
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div class="page-title m-0">
+        <i class="bi bi-pencil-square text-primary me-1"></i> Edit Purchase: <span class="text-primary">@Model.PurchaseNo</span>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="@Url.Action("Index", "Purchase")" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> Cancel
+        </a>
+        <button type="button" class="btn btn-theme-save" onclick="submitPurchaseUpdate()">
+            <i class="bi bi-floppy"></i> Update Purchase
+        </button>
+    </div>
+</div>
+
+<!-- Section 1: Purchase Info -->
+<div class="panel-box">
+    <div class="panel-header">
+        Purchase Info
+    </div>
+    <div class="panel-body">
+        <div class="row g-2">
+            <!-- Purchase No -->
+            <div class="col-12 col-sm-6 col-md-2">
+                <label class="form-label-custom d-flex justify-content-between align-items-center">
+                    <span>Purchase No</span>
+                    <span class="badge bg-secondary text-white" style="font-size: 0.65rem; padding: 2px 5px;">Locked</span>
+                </label>
+                <div class="input-group input-group-sm">
+                    <span class="input-group-text bg-light text-secondary p-1"><i class="bi bi-hash"></i></span>
+                    <input type="text" id="purchaseNoInput" class="form-control form-control-custom text-center fw-bold bg-light" value="@Model.PurchaseNo" readonly />
+                </div>
+            </div>
+
+            <!-- Supplier -->
+            <div class="col-12 col-sm-6 col-md-3">
+                <label class="form-label-custom">Supplier</label>
+                <select id="supplierIdSelect" class="form-select form-select-custom">
+                    @foreach (var s in suppliers)
+                    {
+                        if (s.Id == Model.SupplierId)
+                        {
+                            <option value="@s.Id" selected>@s.Name</option>
+                        }
+                        else
+                        {
+                            <option value="@s.Id">@s.Name</option>
+                        }
+                    }
+                </select>
+            </div>
+
+            <!-- Purchase Date -->
+            <div class="col-12 col-sm-6 col-md-2">
+                <label class="form-label-custom">Purchase Date</label>
+                <input type="date" id="purchaseDateInput" class="form-control form-control-custom" value="@Model.PurchaseDate.ToString("yyyy-MM-dd")" />
+            </div>
+
+            <!-- Receive Date -->
+            <div class="col-12 col-sm-6 col-md-2">
+                <label class="form-label-custom">Receive Date</label>
+                <input type="date" id="receiveDateInput" class="form-control form-control-custom" value="@Model.ReceiveDate.ToString("yyyy-MM-dd")" />
+            </div>
+
+            <!-- Purchase Order No -->
+            <div class="col-12 col-sm-6 col-md-3">
+                <label class="form-label-custom">Purchase Order No</label>
+                <input type="text" id="purchaseOrderNoInput" class="form-control form-control-custom" placeholder="e.g. PO-2026-0038" value="@Model.PurchaseOrderNo" />
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Section 2: Details -->
+<div class="panel-box">
+    <div class="panel-header d-flex justify-content-between align-items-center">
+        <span>Details</span>
+    </div>
+    <div class="panel-body">
+        <div class="mb-3">
+            <button type="button" class="btn btn-sm btn-info text-white" onclick="openProductModal()">
+                <i class="bi bi-plus-lg"></i> Add Item
+            </button>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-details mb-0" id="purchaseItemsTable">
+                <thead>
+                    <tr>
+                        <th style="width: 40px;">SL</th>
+                        <th>Item</th>
+                        <th style="width: 140px;">Code</th>
+                        <th style="width: 90px;" class="text-center">Qty</th>
+                        <th style="width: 120px;" class="text-end">Price</th>
+                        <th style="width: 130px;" class="text-end">Total</th>
+                        <th style="width: 50px;" class="text-center">Action</th>
+                    </tr>
+                </thead>
+                <tbody id="purchaseItemsTbody">
+                    <tr id="emptyRowPlaceholder">
+                        <td colspan="7" class="text-center py-3 text-muted">No items added. Click "+ Add Item" to select products.</td>
+                    </tr>
+                </tbody>
+                <tfoot>
+                    <tr class="fw-bold bg-light">
+                        <td colspan="3" class="text-end">Total:</td>
+                        <td class="text-center" id="tableTotalQty">0</td>
+                        <td></td>
+                        <td class="text-end text-primary" id="tableTotalAmount">0.00</td>
+                        <td></td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Section 3: Summary & Payment -->
+<div class="row g-3">
+    <!-- Notes (Left) -->
+    <div class="col-12 col-lg-6">
+        <div class="panel-box h-100">
+            <div class="panel-header">
+                Notes & Terms
+            </div>
+            <div class="panel-body">
+                <label class="form-label-custom">Supplier / Order Remarks</label>
+                <textarea id="purchaseNotesInput" class="form-control form-control-sm" rows="4" placeholder="Enter purchase terms, payment terms, delivery notes...">@Model.Notes</textarea>
+            </div>
+        </div>
+    </div>
+
+    <!-- Amount Summary (Right) -->
+    <div class="col-12 col-lg-6">
+        <div class="panel-box h-100">
+            <div class="panel-header">
+                Amount Summary
+            </div>
+            <div class="panel-body">
+                <div class="row g-2 mb-2 align-items-center">
+                    <div class="col-5">
+                        <label class="form-label-custom mb-0">Sub Total</label>
+                    </div>
+                    <div class="col-7">
+                        <input type="text" id="calcSubTotal" class="form-control form-control-sm text-end fw-semibold bg-light" value="@Model.SubTotal.ToString("N2")" readonly />
+                    </div>
+                </div>
+
+                <div class="row g-2 mb-2 align-items-center">
+                    <div class="col-5">
+                        <label class="form-label-custom mb-0">Discount Amount</label>
+                    </div>
+                    <div class="col-7">
+                        <input type="number" step="0.01" id="calcDiscount" class="form-control form-control-sm text-end" value="@Model.DiscountAmount.ToString("N2")" oninput="calculateTotals()" />
+                    </div>
+                </div>
+
+                <div class="row g-2 mb-2 align-items-center">
+                    <div class="col-5">
+                        <label class="form-label-custom mb-0 fw-bold text-primary">Total Amount</label>
+                    </div>
+                    <div class="col-7">
+                        <input type="text" id="calcTotal" class="form-control form-control-sm text-end fw-bold text-primary" style="background:#e0f2fe;" value="@Model.TotalAmount.ToString("N2")" readonly />
+                    </div>
+                </div>
+
+                <div class="row g-2 mb-2 align-items-center">
+                    <div class="col-5 d-flex justify-content-between align-items-center">
+                        <label class="form-label-custom mb-0 fw-bold text-success">Paid Amount</label>
+                        <button type="button" class="btn btn-sm btn-link text-decoration-none p-0" style="font-size:0.75rem;" onclick="resetPurchasePaidToFull()" title="Full Paid">Full</button>
+                    </div>
+                    <div class="col-7">
+                        <input type="number" step="0.01" id="calcPaid" class="form-control form-control-sm text-end fw-bold text-success" value="@Model.PaidAmount.ToString("N2")" oninput="onPaidInput()" />
+                    </div>
+                </div>
+
+                <div class="row g-2 mb-2 align-items-center">
+                    <div class="col-5">
+                        <label class="form-label-custom mb-0 text-danger">Due Amount</label>
+                    </div>
+                    <div class="col-7">
+                        <input type="text" id="calcDue" class="form-control form-control-sm text-end fw-bold text-danger bg-light" value="@Model.DueAmount.ToString("N2")" readonly />
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Select Product -->
+<div class="modal fade" id="productModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-info text-white">
+                <h5 class="modal-title"><i class="bi bi-box-seam me-1"></i> Select Product to Purchase</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-3">
+                <div class="row g-2 mb-3">
+                    <div class="col-12 col-md-8">
+                        <input type="text" id="modalProductSearch" class="form-control form-control-sm" placeholder="Search product name, code, generic..." oninput="filterModalProducts()" />
+                    </div>
+                    <div class="col-12 col-md-4">
+                        <select id="modalCategoryFilter" class="form-select form-select-sm" onchange="filterModalProducts()">
+                            <option value="">-- All Categories --</option>
+                            @foreach (var cat in categories)
+                            {
+                                <option value="@cat.Id">@cat.Name</option>
+                            }
+                        </select>
+                    </div>
+                </div>
+
+                <div class="table-responsive" style="max-height: 380px; overflow-y: auto;">
+                    <table class="table table-sm modal-product-table mb-0 align-middle">
+                        <thead>
+                            <tr>
+                                <th>Photo</th>
+                                <th>Item Name</th>
+                                <th>Generic</th>
+                                <th>Code</th>
+                                <th>Unit</th>
+                                <th>Cost Price</th>
+                                <th class="text-end">Current Stock</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody id="modalProductList">
+                            <tr>
+                                <td colspan="8" class="text-center py-3 text-muted">Loading product catalog...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer bg-light py-2">
+                <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@Html.AntiForgeryToken()
+
+@section Scripts {
+<script>
+    let purchaseItems = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Items));
+    let modalProductsCache = [];
+    let isPurchasePaidManuallyEdited = true;
+
+    document.addEventListener('DOMContentLoaded', function () {
+        loadModalProducts();
+        renderPurchaseItems();
+        calculateTotals();
+    });
+
+    function openProductModal() {
+        const modal = new bootstrap.Modal(document.getElementById('productModal'));
+        modal.show();
+        setTimeout(() => document.getElementById('modalProductSearch').focus(), 400);
+    }
+
+    function loadModalProducts() {
+        fetch('/Sales/GetProductsJson')
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    modalProductsCache = data.items;
+                    renderModalProducts(modalProductsCache);
+                }
+            })
+            .catch(err => console.error(err));
+    }
+
+    function filterModalProducts() {
+        const term = document.getElementById('modalProductSearch').value.toLowerCase().trim();
+        const catId = document.getElementById('modalCategoryFilter').value;
+
+        const filtered = modalProductsCache.filter(p => {
+            const matchesTerm = !term || p.Name.toLowerCase().includes(term) || (p.GenericName && p.GenericName.toLowerCase().includes(term)) || p.Code.toLowerCase().includes(term);
+            const matchesCat = !catId || p.CategoryId.toString() === catId;
+            return matchesTerm && matchesCat;
+        });
+
+        renderModalProducts(filtered);
+    }
+
+    function renderModalProducts(list) {
+        const tbody = document.getElementById('modalProductList');
+        if (!list || list.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="8" class="text-center py-3 text-muted">No products found matching criteria.</td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = list.map(p => `
+            <tr onclick='selectProductFromModal(${JSON.stringify(p)})'>
+                <td>
+                    <img src="${p.ImageUrl || '/uploads/products/pharma-item.svg'}" alt="${p.Name}" class="rounded border" style="width: 32px; height: 32px; object-fit: contain; background: #fff;" />
+                </td>
+                <td class="fw-semibold text-primary">${p.Name}</td>
+                <td class="text-muted small">${p.GenericName || '-'}</td>
+                <td><span class="badge bg-light text-dark border">${p.Code}</span></td>
+                <td>${p.UnitName}</td>
+                <td class="fw-bold">৳ ${p.PurchasePrice.toFixed(2)}</td>
+                <td class="text-end">
+                    <span class="badge ${p.CurrentStock <= 5 ? 'bg-danger' : 'bg-success'}">${p.CurrentStock}</span>
+                </td>
+                <td>
+                    <button type="button" class="btn btn-sm btn-primary py-0 px-2">Select</button>
+                </td>
+            </tr>
+        `).join('');
+    }
+
+    function selectProductFromModal(prod) {
+        const existing = purchaseItems.find(x => x.ProductId === prod.Id);
+        if (existing) {
+            existing.Quantity += 1;
+            existing.TotalAmount = existing.Quantity * existing.PurchasePrice;
+        } else {
+            purchaseItems.push({
+                ProductId: prod.Id,
+                ProductName: prod.Name,
+                ProductCode: prod.Code,
+                Quantity: 1,
+                PurchasePrice: prod.PurchasePrice,
+                TotalAmount: prod.PurchasePrice
+            });
+        }
+
+        renderPurchaseItems();
+        calculateTotals();
+
+        bootstrap.Modal.getInstance(document.getElementById('productModal'))?.hide();
+    }
+
+    function onQtyChange(index, inputEl) {
+        const qty = parseFloat(inputEl.value) || 0;
+        purchaseItems[index].Quantity = qty;
+        purchaseItems[index].TotalAmount = qty * purchaseItems[index].PurchasePrice;
+        updatePurchaseRowDom(index);
+        calculateTotals();
+    }
+
+    function onPriceChange(index, inputEl) {
+        const price = parseFloat(inputEl.value) || 0;
+        purchaseItems[index].PurchasePrice = price;
+        purchaseItems[index].TotalAmount = purchaseItems[index].Quantity * price;
+        updatePurchaseRowDom(index);
+        calculateTotals();
+    }
+
+    function updatePurchaseRowDom(index) {
+        const item = purchaseItems[index];
+        const rowTotalEl = document.getElementById('rowTotal_' + index);
+        if (rowTotalEl) rowTotalEl.innerText = item.TotalAmount.toFixed(2);
+        updatePurchaseTableTotals();
+    }
+
+    function updatePurchaseTableTotals() {
+        const totalQty = purchaseItems.reduce((acc, x) => acc + x.Quantity, 0);
+        const totalAmt = purchaseItems.reduce((acc, x) => acc + x.TotalAmount, 0);
+        document.getElementById('tableTotalQty').innerText = totalQty;
+        document.getElementById('tableTotalAmount').innerText = totalAmt.toFixed(2);
+    }
+
+    function removeItem(index) {
+        purchaseItems.splice(index, 1);
+        renderPurchaseItems();
+        calculateTotals();
+    }
+
+    function renderPurchaseItems() {
+        const tbody = document.getElementById('purchaseItemsTbody');
+        if (purchaseItems.length === 0) {
+            tbody.innerHTML = `
+                <tr id="emptyRowPlaceholder">
+                    <td colspan="7" class="text-center py-3 text-muted">No items added. Click "+ Add Item" to select products.</td>
+                </tr>`;
+            document.getElementById('tableTotalQty').innerText = '0';
+            document.getElementById('tableTotalAmount').innerText = '0.00';
+            return;
+        }
+
+        tbody.innerHTML = purchaseItems.map((item, idx) => `
+            <tr>
+                <td>${idx + 1}</td>
+                <td class="fw-semibold">${item.ProductName}</td>
+                <td><span class="badge bg-light text-dark border">${item.ProductCode}</span></td>
+                <td class="text-center">
+                    <input type="number" class="form-control form-control-sm py-0 text-center d-inline-block" 
+                           value="${item.Quantity}" min="0" step="any"
+                           oninput="onQtyChange(${idx}, this)" style="width:75px;" />
+                </td>
+                <td class="text-end">
+                    <input type="number" step="0.01" class="form-control form-control-sm py-0 text-end d-inline-block" 
+                           value="${item.PurchasePrice}" 
+                           oninput="onPriceChange(${idx}, this)" style="width:95px;" />
+                </td>
+                <td class="text-end fw-bold text-primary" id="rowTotal_${idx}">${item.TotalAmount.toFixed(2)}</td>
+                <td class="text-center">
+                    <button type="button" class="btn btn-sm btn-outline-danger p-0 px-1" onclick="removeItem(${idx})">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </td>
+            </tr>
+        `).join('');
+
+        updatePurchaseTableTotals();
+    }
+
+    function onPaidInput() {
+        isPurchasePaidManuallyEdited = true;
+        calculateTotals(true);
+    }
+
+    function resetPurchasePaidToFull() {
+        isPurchasePaidManuallyEdited = false;
+        calculateTotals(false);
+    }
+
+    function calculateTotals(fromPaidInput = false) {
+        const sub = purchaseItems.reduce((acc, x) => acc + x.TotalAmount, 0);
+        document.getElementById('calcSubTotal').value = sub.toFixed(2);
+
+        const discount = parseFloat(document.getElementById('calcDiscount').value) || 0;
+        const total = Math.max(0, sub - discount);
+        document.getElementById('calcTotal').value = total.toFixed(2);
+
+        let paid;
+        if (!fromPaidInput && !isPurchasePaidManuallyEdited) {
+            paid = total;
+            document.getElementById('calcPaid').value = paid.toFixed(2);
+        } else {
+            paid = parseFloat(document.getElementById('calcPaid').value) || 0;
+        }
+
+        const due = Math.max(0, total - paid);
+        document.getElementById('calcDue').value = due.toFixed(2);
+    }
+
+    function submitPurchaseUpdate() {
+        if (purchaseItems.length === 0) {
+            Swal.fire('Empty Purchase', 'Please add at least one item before updating.', 'warning');
+            return;
+        }
+
+        const payload = {
+            Id: @Model.Id,
+            PurchaseNo: document.getElementById('purchaseNoInput').value,
+            SupplierId: parseInt(document.getElementById('supplierIdSelect').value) || 1,
+            PurchaseDate: document.getElementById('purchaseDateInput').value,
+            ReceiveDate: document.getElementById('receiveDateInput').value,
+            PurchaseOrderNo: document.getElementById('purchaseOrderNoInput').value,
+            SubTotal: parseFloat(document.getElementById('calcSubTotal').value) || 0,
+            DiscountAmount: parseFloat(document.getElementById('calcDiscount').value) || 0,
+            TotalAmount: parseFloat(document.getElementById('calcTotal').value) || 0,
+            PaidAmount: parseFloat(document.getElementById('calcPaid').value) || 0,
+            DueAmount: parseFloat(document.getElementById('calcDue').value) || 0,
+            Notes: document.getElementById('purchaseNotesInput').value,
+            Items: purchaseItems
+        };
+
+        const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value;
+
+        fetch('@Url.Action("Edit", "Purchase")', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'RequestVerificationToken': token || ''
+            },
+            body: JSON.stringify(payload)
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Purchase Updated!',
+                    text: data.message,
+                    showCancelButton: true,
+                    confirmButtonText: 'Print HTML Report',
+                    cancelButtonText: 'Back to Purchase List'
+                }).then(result => {
+                    if (result.isConfirmed) {
+                        window.location.href = `/Purchase/GetReport/${data.purchaseId}`;
+                    } else {
+                        window.location.href = '/Purchase/Index';
+                    }
+                });
+            } else {
+                Swal.fire('Error', data.message || 'Could not update purchase.', 'error');
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            Swal.fire('Error', 'An error occurred during submission.', 'error');
+        });
+    }
+</script>
+}

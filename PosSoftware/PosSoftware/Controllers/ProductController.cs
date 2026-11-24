@@ -99,6 +99,7 @@ namespace PosSoftware.Controllers
 
             var products = await q
                 .OrderBy(p => p.Category != null ? p.Category.Name : "")
+                .ThenBy(p => p.SortOrder)
                 .ThenBy(p => p.SKU)
                 .ThenBy(p => p.Name)
                 .ToListAsync();

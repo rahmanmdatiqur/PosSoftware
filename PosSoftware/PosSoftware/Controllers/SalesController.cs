@@ -158,8 +158,8 @@ namespace PosSoftware.Controllers
                 ChangeAmount = (model.PaidAmount > model.FinalPayable) ? (model.PaidAmount - model.FinalPayable) : 0,
                 DuesAmount = model.DuesAmount,
                 PaymentMethod = model.PaymentMethod ?? "Cash",
-                Status = "Completed",
-                IsPosted = true,
+                Status = "Unposted",
+                IsPosted = false,
                 Notes = model.Notes,
                 CashierId = cashierId
             };
@@ -237,10 +237,214 @@ namespace PosSoftware.Controllers
             if (sale == null) return Json(new { success = false, message = "Sale not found" });
 
             sale.IsPosted = true;
-            sale.Status = "Completed";
+            sale.Status = "Posted";
             await _context.SaveChangesAsync();
 
             return Json(new { success = true, message = "Sale marked as Posted." });
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> BulkPost([FromBody] List<int> ids)
+        {
+            if (ids == null || !ids.Any())
+            {
+                return Json(new { success = false, message = "No invoices selected to post." });
+            }
+
+            var sales = await _context.Sales.Where(s => ids.Contains(s.Id)).ToListAsync();
+            foreach (var s in sales)
+            {
+                s.IsPosted = true;
+                s.Status = "Posted";
+            }
+            await _context.SaveChangesAsync();
+
+            return Json(new { success = true, count = sales.Count, message = $"{sales.Count} invoice(s) marked as Posted successfully." });
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> Edit(int id)
+        {
+            var sale = await _context.Sales
+                .Include(s => s.Customer)
+                .Include(s => s.SaleItems)
+                .ThenInclude(si => si.Product)
+                .FirstOrDefaultAsync(s => s.Id == id);
+
+            if (sale == null) return NotFound();
+
+            if (sale.IsPosted)
+            {
+                TempData["ErrorMessage"] = $"Sale Invoice #{sale.InvoiceNumber} is already Posted and cannot be updated.";
+                return RedirectToAction(nameof(Index));
+            }
+
+            ViewBag.Customers = await _context.Customers.Where(c => c.IsActive).OrderBy(c => c.Name).ToListAsync();
+            ViewBag.Categories = await _context.Categories.Where(c => c.IsActive).OrderBy(c => c.Name).ToListAsync();
+
+            var vm = new SaleEntryViewModel
+            {
+                Id = sale.Id,
+                InvoiceNo = sale.InvoiceNumber,
+                SaleDate = sale.SaleDate,
+                CustomerId = sale.CustomerId,
+                CustomerType = sale.CustomerType ?? "Walk-in",
+                AdmissionNo = sale.AdmissionNo,
+                SaleOrderNo = sale.SaleOrderNo,
+                FundType = sale.FundType ?? "Cash",
+                MobileNumber = sale.MobileNumber,
+                TotalAmount = sale.SubTotal,
+                DiscountPercent = sale.DiscountPercent,
+                DiscountAmount = sale.DiscountAmount,
+                RoundUp = sale.RoundUp,
+                FinalPayable = sale.FinalPayable > 0 ? sale.FinalPayable : sale.GrandTotal,
+                PaidAmount = sale.PaidAmount,
+                DuesAmount = sale.DuesAmount,
+                PaymentMethod = sale.PaymentMethod ?? "Cash",
+                Notes = sale.Notes,
+                Items = sale.SaleItems.Select(si => new SaleItemEntryInput
+                {
+                    ProductId = si.ProductId,
+                    ProductName = si.ProductName,
+                    ProductCode = si.Product != null ? (!string.IsNullOrEmpty(si.Product.Barcode) ? si.Product.Barcode : si.Product.SKU) : "",
+                    BatchNo = si.BatchNo,
+                    Quantity = si.Quantity,
+                    Price = si.UnitPrice,
+                    SubTotal = si.SubTotal,
+                    DiscountPercent = 0,
+                    DiscountAmount = si.DiscountAmount,
+                    TotalAmount = si.TotalAmount
+                }).ToList()
+            };
+
+            return View(vm);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Edit([FromBody] SaleEntryViewModel model)
+        {
+            if (model == null || model.Items == null || !model.Items.Any())
+            {
+                return Json(new { success = false, message = "Please add at least one item to the sale." });
+            }
+
+            var sale = await _context.Sales
+                .Include(s => s.SaleItems)
+                .FirstOrDefaultAsync(s => s.Id == model.Id);
+
+            if (sale == null)
+            {
+                return Json(new { success = false, message = "Sale record not found." });
+            }
+
+            if (sale.IsPosted)
+            {
+                return Json(new { success = false, message = "Posted sales cannot be updated." });
+            }
+
+            int cashierId = sale.CashierId ?? 1;
+            var uidClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (int.TryParse(uidClaim, out int uid)) cashierId = uid;
+
+            // 1. Revert previous stock deductions for old items
+            foreach (var oldItem in sale.SaleItems)
+            {
+                var product = await _context.Products.FindAsync(oldItem.ProductId);
+                if (product != null)
+                {
+                    int prevStock = product.CurrentStock;
+                    product.CurrentStock += oldItem.Quantity;
+
+                    var tx = new StockTransaction
+                    {
+                        ProductId = product.Id,
+                        TransactionType = "Adjustment",
+                        Quantity = oldItem.Quantity,
+                        PreviousStock = prevStock,
+                        NewStock = product.CurrentStock,
+                        ReferenceNo = sale.InvoiceNumber,
+                        Notes = $"Stock restored due to Invoice #{sale.InvoiceNumber} edit",
+                        CreatedByUserId = cashierId,
+                        CreatedAt = DateTime.UtcNow
+                    };
+                    _context.StockTransactions.Add(tx);
+                }
+            }
+
+            // Remove previous items
+            _context.SaleItems.RemoveRange(sale.SaleItems);
+            sale.SaleItems.Clear();
+
+            // 2. Apply new stock deductions and add new items
+            foreach (var item in model.Items)
+            {
+                var product = await _context.Products.FindAsync(item.ProductId);
+                if (product != null)
+                {
+                    int prevStock = product.CurrentStock;
+                    product.CurrentStock -= item.Quantity;
+
+                    var tx = new StockTransaction
+                    {
+                        ProductId = product.Id,
+                        TransactionType = "Sale",
+                        Quantity = item.Quantity,
+                        PreviousStock = prevStock,
+                        NewStock = product.CurrentStock,
+                        ReferenceNo = sale.InvoiceNumber,
+                        Notes = $"Sale item updated via Invoice #{sale.InvoiceNumber}",
+                        CreatedByUserId = cashierId,
+                        CreatedAt = DateTime.UtcNow
+                    };
+                    _context.StockTransactions.Add(tx);
+                }
+
+                sale.SaleItems.Add(new SaleItem
+                {
+                    ProductId = item.ProductId,
+                    ProductName = item.ProductName,
+                    BatchNo = item.BatchNo,
+                    Quantity = item.Quantity,
+                    UnitPrice = item.Price,
+                    SubTotal = item.SubTotal,
+                    DiscountAmount = item.DiscountAmount,
+                    TotalAmount = item.TotalAmount
+                });
+            }
+
+            // 3. Update sale header info
+            sale.SaleDate = model.SaleDate;
+            sale.CustomerId = model.CustomerId > 0 ? model.CustomerId : 1;
+            sale.CustomerType = model.CustomerType ?? "Walk-in";
+            sale.AdmissionNo = model.AdmissionNo;
+            sale.SaleOrderNo = model.SaleOrderNo;
+            sale.FundType = model.FundType ?? "Cash";
+            sale.MobileNumber = model.MobileNumber;
+            sale.SubTotal = model.TotalAmount;
+            sale.DiscountPercent = model.DiscountPercent;
+            sale.DiscountAmount = model.DiscountAmount;
+            sale.RoundUp = model.RoundUp;
+            sale.FinalPayable = model.FinalPayable;
+            sale.GrandTotal = model.FinalPayable > 0 ? model.FinalPayable : model.TotalAmount - model.DiscountAmount;
+            sale.PaidAmount = model.PaidAmount;
+            sale.ChangeAmount = (model.PaidAmount > model.FinalPayable) ? (model.PaidAmount - model.FinalPayable) : 0;
+            sale.DuesAmount = model.DuesAmount;
+            sale.PaymentMethod = model.PaymentMethod ?? "Cash";
+            sale.Notes = model.Notes;
+            sale.CashierId = cashierId;
+            sale.Status = "Unposted";
+            sale.IsPosted = false;
+
+            await _context.SaveChangesAsync();
+
+            return Json(new
+            {
+                success = true,
+                message = "Sale invoice updated successfully!",
+                saleId = sale.Id,
+                invoiceNumber = sale.InvoiceNumber
+            });
         }
 
         [HttpGet]
