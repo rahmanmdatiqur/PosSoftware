@@ -1,0 +1,112 @@
+@model PosSoftware.Models.ViewModels.ReceiptViewModel
+@{
+    Layout = null;
+}
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Receipt #@Model.Sale.InvoiceNumber</title>
+    <style>
+        body {
+            font-family: 'Courier New', Courier, monospace;
+            width: 80mm;
+            margin: 0 auto;
+            padding: 10px;
+            color: #000;
+            background: #fff;
+            font-size: 12px;
+        }
+        .text-center { text-align: center; }
+        .text-end { text-align: right; }
+        .fw-bold { font-weight: bold; }
+        .divider { border-bottom: 1px dashed #000; margin: 8px 0; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 3px 0; }
+        @@media print {
+            body { width: 80mm; margin: 0; padding: 0; }
+            .no-print { display: none; }
+        }
+    </style>
+</head>
+<body onload="window.print()">
+    <div class="text-center">
+        <h3 style="margin: 0;">@Model.StoreName</h3>
+        <div>@Model.StoreAddress</div>
+        <div>Tel: @Model.StorePhone</div>
+        <div class="divider"></div>
+        <div><strong>TAX INVOICE</strong></div>
+        <div>Inv: #@Model.Sale.InvoiceNumber</div>
+        <div>Date: @Model.Sale.SaleDate.ToString("yyyy-MM-dd HH:mm")</div>
+        <div>Cashier: @(Model.Sale.Cashier?.FullName ?? "Counter")</div>
+    </div>
+
+    <div class="divider"></div>
+
+    <table>
+        <thead>
+            <tr>
+                <th style="text-align: left;">Item</th>
+                <th class="text-center">Qty</th>
+                <th class="text-end">Price</th>
+                <th class="text-end">Total</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model.Items)
+            {
+                <tr>
+                    <td style="text-align: left;">@item.ProductName</td>
+                    <td class="text-center">@item.Quantity</td>
+                    <td class="text-end">$@item.UnitPrice.ToString("N2")</td>
+                    <td class="text-end">$@item.TotalAmount.ToString("N2")</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    <div class="divider"></div>
+
+    <table>
+        <tr>
+            <td>Subtotal:</td>
+            <td class="text-end">$@Model.Sale.SubTotal.ToString("N2")</td>
+        </tr>
+        <tr>
+            <td>Tax (@Model.Sale.TaxRate.ToString("0.0")%):</td>
+            <td class="text-end">$@Model.Sale.TaxAmount.ToString("N2")</td>
+        </tr>
+        @if (Model.Sale.DiscountAmount > 0)
+        {
+            <tr>
+                <td>Discount:</td>
+                <td class="text-end">-$@Model.Sale.DiscountAmount.ToString("N2")</td>
+            </tr>
+        }
+        <tr class="fw-bold" style="font-size: 14px;">
+            <td>GRAND TOTAL:</td>
+            <td class="text-end">$@Model.Sale.GrandTotal.ToString("N2")</td>
+        </tr>
+        <tr>
+            <td>Paid (@Model.Sale.PaymentMethod):</td>
+            <td class="text-end">$@Model.Sale.PaidAmount.ToString("N2")</td>
+        </tr>
+        <tr>
+            <td>Change Due:</td>
+            <td class="text-end">$@Model.Sale.ChangeAmount.ToString("N2")</td>
+        </tr>
+    </table>
+
+    <div class="divider"></div>
+
+    <div class="text-center" style="margin-top: 15px;">
+        <div>Thank you for your purchase!</div>
+        <div>Please retain receipt for exchanges.</div>
+    </div>
+
+    <div class="text-center no-print" style="margin-top: 20px;">
+        <button onclick="window.print()" style="padding: 8px 16px; cursor: pointer;">Print Receipt</button>
+        <button onclick="window.close()" style="padding: 8px 16px; cursor: pointer;">Close</button>
+    </div>
+</body>
+</html>

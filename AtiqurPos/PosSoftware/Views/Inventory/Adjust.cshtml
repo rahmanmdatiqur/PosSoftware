@@ -1,0 +1,111 @@
+@model PosSoftware.Models.ViewModels.StockAdjustmentFormViewModel
+@{
+    ViewData["Title"] = "Stock Adjustment";
+    var products = ViewBag.Products as List<PosSoftware.Models.Entities.Product> ?? new();
+}
+
+<div class="container-fluid p-0">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h4 class="fw-bold text-dark m-0">Physical Stock Adjustment</h4>
+            <span class="text-muted small">Perform warehouse audits and reconcile discrepancies</span>
+        </div>
+        <a href="@Url.Action("Index", "Inventory")" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> Back to Inventory
+        </a>
+    </div>
+
+    <form method="post" action="@Url.Action("Adjust", "Inventory")">
+        @Html.AntiForgeryToken()
+        <div class="card border-0 shadow-sm p-4 bg-white rounded-3 mb-4">
+            <div class="row g-3 mb-4">
+                <div class="col-md-4">
+                    <label class="form-label fw-bold">Adjustment Reference #</label>
+                    <input asp-for="AdjustmentNo" class="form-control" readonly />
+                </div>
+                <div class="col-md-8">
+                    <label class="form-label fw-semibold">Audit Notes / Reason Summary</label>
+                    <input asp-for="Notes" class="form-control" placeholder="e.g. End of Month Physical Audit - Damaged or missing items" />
+                </div>
+            </div>
+
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <h6 class="fw-bold m-0"><i class="bi bi-list-check me-1 text-primary"></i> Adjusted Products</h6>
+                <button type="button" class="btn btn-sm btn-primary" onclick="addAdjustmentRow()">
+                    <i class="bi bi-plus-lg"></i> Add Item
+                </button>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-bordered align-middle" id="adjustmentTable">
+                    <thead class="table-light">
+                        <tr>
+                            <th style="width: 40%;">Product *</th>
+                            <th style="width: 25%;">Physical Count (New Stock) *</th>
+                            <th style="width: 30%;">Discrepancy Reason</th>
+                            <th style="width: 5%;"></th>
+                        </tr>
+                    </thead>
+                    <tbody id="adjustmentTbody">
+                        <!-- Populated dynamically via JS -->
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="text-end mt-3">
+                <button type="submit" class="btn btn-primary px-4 fw-bold">
+                    <i class="bi bi-save me-1"></i> Save Stock Adjustments
+                </button>
+            </div>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <script>
+        const productsJson = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(products.Select(p => new { p.Id, p.Name, p.CurrentStock })));
+        let rowIndex = 0;
+
+        function addAdjustmentRow() {
+            const tbody = document.getElementById('adjustmentTbody');
+            const tr = document.createElement('tr');
+            
+            let optionsHtml = '<option value="">-- Choose Product --</option>';
+            productsJson.forEach(p => {
+                optionsHtml += `<option value="${p.Id}">${p.Name} (Current: ${p.CurrentStock})</option>`;
+            });
+
+            tr.innerHTML = `
+                <td>
+                    <select name="Items[${rowIndex}].ProductId" class="form-select" required>
+                        ${optionsHtml}
+                    </select>
+                </td>
+                <td>
+                    <input type="number" name="Items[${rowIndex}].AdjustedStock" class="form-control" min="0" required placeholder="Actual stock count" />
+                </td>
+                <td>
+                    <select name="Items[${rowIndex}].Reason" class="form-select">
+                        <option value="Damaged Goods">Damaged Goods</option>
+                        <option value="Expired Product">Expired Product</option>
+                        <option value="Physical Count Correction">Physical Count Correction</option>
+                        <option value="Theft or Loss">Theft or Loss</option>
+                        <option value="Found Unrecorded Stock">Found Unrecorded Stock</option>
+                    </select>
+                </td>
+                <td class="text-center">
+                    <button type="button" class="btn btn-sm btn-outline-danger" onclick="this.closest('tr').remove()">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </td>
+            `;
+
+            tbody.appendChild(tr);
+            rowIndex++;
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            addAdjustmentRow();
+        });
+    </script>
+}

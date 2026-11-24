@@ -1,0 +1,283 @@
+@{
+    int currentPage = ViewBag.CurrentPage is int cp ? cp : 1;
+    int pageSize = ViewBag.PageSize is int ps ? ps : 10;
+    int totalItems = ViewBag.TotalItems is int ti ? ti : 0;
+    int totalPages = ViewBag.TotalPages is int tp ? tp : (int)Math.Ceiling(totalItems / (double)pageSize);
+    if (totalPages <= 0) { totalPages = 1; }
+    if (currentPage > totalPages) { currentPage = totalPages; }
+    if (currentPage < 1) { currentPage = 1; }
+
+    int startItem = totalItems == 0 ? 0 : ((currentPage - 1) * pageSize) + 1;
+    int endItem = Math.Min(currentPage * pageSize, totalItems);
+
+    int maxDisplay = 10;
+    int startPage = 1;
+    int endPage = Math.Min(totalPages, maxDisplay);
+
+    if (currentPage > 6 && totalPages > maxDisplay)
+    {
+        startPage = Math.Max(1, currentPage - 4);
+        endPage = Math.Min(totalPages, startPage + maxDisplay - 1);
+        if (endPage - startPage < maxDisplay - 1)
+        {
+            startPage = Math.Max(1, endPage - maxDisplay + 1);
+        }
+    }
+}
+
+<style>
+    .kendo-pager-bar {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 6px;
+        background-color: #e4f2fb;
+        border-top: 1px solid #cce5f7;
+        padding: 6px 14px;
+        font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+        font-size: 0.82rem;
+        color: #1e293b;
+        user-select: none;
+    }
+
+    .pager-circle-btn {
+        width: 28px;
+        height: 28px;
+        min-width: 28px;
+        border-radius: 50%;
+        background-color: #d1e8f8;
+        border: 1px solid transparent;
+        color: #0284c7;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        text-decoration: none;
+        cursor: pointer;
+        transition: all 0.15s ease;
+    }
+
+    .pager-circle-btn:hover:not(.disabled) {
+        background-color: #b9ddf6;
+        color: #0369a1;
+    }
+
+    .pager-circle-btn.disabled {
+        opacity: 0.38;
+        cursor: default;
+        pointer-events: none;
+        background-color: #e2edf5;
+        color: #64748b;
+    }
+
+    .pager-pages-list {
+        display: inline-flex;
+        align-items: center;
+        gap: 2px;
+    }
+
+    .pager-page-link {
+        min-width: 24px;
+        height: 28px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0 4px;
+        color: #334155;
+        font-weight: 500;
+        font-size: 0.84rem;
+        text-decoration: none;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: all 0.12s ease;
+    }
+
+    .pager-page-link:hover:not(.active) {
+        background-color: rgba(2, 132, 199, 0.14);
+        color: #0284c7;
+    }
+
+    .pager-page-link.active {
+        width: 28px;
+        height: 28px;
+        min-width: 28px;
+        border-radius: 50%;
+        background-color: #0e6e8c;
+        color: #ffffff;
+        font-weight: 700;
+        box-shadow: 0 1px 3px rgba(14, 110, 140, 0.3);
+    }
+
+    .pager-dots {
+        color: #64748b;
+        padding: 0 4px;
+        font-size: 0.82rem;
+    }
+
+    .pager-size-wrapper {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        margin-left: 6px;
+    }
+
+    .pager-dropdown {
+        height: 28px;
+        border: 1px solid #7dd3fc;
+        border-radius: 5px;
+        background-color: #ffffff;
+        color: #0f172a;
+        font-size: 0.82rem;
+        font-weight: 500;
+        padding: 2px 8px;
+        outline: none;
+        cursor: pointer;
+    }
+
+    .pager-dropdown:focus {
+        border-color: #0284c7;
+        box-shadow: 0 0 0 2px rgba(2, 132, 199, 0.2);
+    }
+
+    .pager-size-label {
+        color: #334155;
+        font-size: 0.82rem;
+    }
+
+    .pager-right-meta {
+        margin-left: auto;
+        display: inline-flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .pager-count-info {
+        color: #1e293b;
+        font-size: 0.82rem;
+        font-weight: 500;
+    }
+
+    .pager-reload-btn {
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background: transparent;
+        border: 1px solid transparent;
+        color: #0284c7;
+        font-size: 1.05rem;
+        text-decoration: none;
+        cursor: pointer;
+        transition: all 0.15s ease;
+    }
+
+    .pager-reload-btn:hover {
+        background-color: #d1e8f8;
+        color: #0369a1;
+    }
+</style>
+
+<div class="kendo-pager-bar">
+    <!-- |< First Page -->
+    <a href="javascript:void(0);" onclick="gridNavigatePage(1)" 
+       class="pager-circle-btn @(currentPage <= 1 ? "disabled" : "")" title="First Page">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M18.41 16.59L13.82 12l4.59-4.59L17 6l-6 6 6 6zM6 6h2v12H6z"/>
+        </svg>
+    </a>
+
+    <!-- < Previous Page -->
+    <a href="javascript:void(0);" onclick="gridNavigatePage(@(currentPage - 1))" 
+       class="pager-circle-btn @(currentPage <= 1 ? "disabled" : "")" title="Previous Page">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/>
+        </svg>
+    </a>
+
+    <!-- Page Numbers List -->
+    <div class="pager-pages-list">
+        @if (startPage > 1)
+        {
+            <a href="javascript:void(0);" onclick="gridNavigatePage(1)" class="pager-page-link">1</a>
+            @if (startPage > 2)
+            {
+                <span class="pager-dots">...</span>
+            }
+        }
+
+        @for (int i = startPage; i <= endPage; i++)
+        {
+            if (i == currentPage)
+            {
+                <span class="pager-page-link active">@i</span>
+            }
+            else
+            {
+                <a href="javascript:void(0);" onclick="gridNavigatePage(@i)" class="pager-page-link">@i</a>
+            }
+        }
+
+        @if (endPage < totalPages)
+        {
+            @if (endPage < totalPages - 1)
+            {
+                <span class="pager-dots">...</span>
+            }
+            <a href="javascript:void(0);" onclick="gridNavigatePage(@totalPages)" class="pager-page-link">@totalPages</a>
+        }
+    </div>
+
+    <!-- > Next Page -->
+    <a href="javascript:void(0);" onclick="gridNavigatePage(@(currentPage + 1))" 
+       class="pager-circle-btn @(currentPage >= totalPages ? "disabled" : "")" title="Next Page">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/>
+        </svg>
+    </a>
+
+    <!-- >| Last Page -->
+    <a href="javascript:void(0);" onclick="gridNavigatePage(@totalPages)" 
+       class="pager-circle-btn @(currentPage >= totalPages ? "disabled" : "")" title="Last Page">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M5.59 7.41L10.18 12l-4.59 4.59L7 18l6-6-6-6zM16 6h2v12h-2z"/>
+        </svg>
+    </a>
+
+    <!-- Page Size Dropdown -->
+    <div class="pager-size-wrapper">
+        <select class="pager-dropdown" onchange="gridChangePageSize(this.value)">
+            <!option value="10" @(pageSize == 10 ? "selected" : "")>10</!option>
+            <!option value="20" @(pageSize == 20 ? "selected" : "")>20</!option>
+            <!option value="50" @(pageSize == 50 ? "selected" : "")>50</!option>
+            <!option value="100" @(pageSize == 100 ? "selected" : "")>100</!option>
+        </select>
+        <span class="pager-size-label">items per page</span>
+    </div>
+
+    <!-- Right Side Meta Count & Refresh Button -->
+    <div class="pager-right-meta">
+        <span class="pager-count-info">
+            @startItem - @endItem of @totalItems items
+        </span>
+        <button type="button" class="pager-reload-btn" onclick="location.reload()" title="Refresh Data">
+            <i class="bi bi-arrow-clockwise"></i>
+        </button>
+    </div>
+</div>
+
+<script>
+    function gridNavigatePage(targetPage) {
+        const url = new URL(window.location.href);
+        url.searchParams.set('page', targetPage);
+        window.location.href = url.toString();
+    }
+
+    function gridChangePageSize(newSize) {
+        const url = new URL(window.location.href);
+        url.searchParams.set('page', '1');
+        url.searchParams.set('pageSize', newSize);
+        window.location.href = url.toString();
+    }
+</script>
+

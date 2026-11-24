@@ -1,0 +1,390 @@
+@model List<PosSoftware.Models.Entities.Product>
+@{
+    Layout = null;
+    int totalCount = Model.Count;
+    int pageSize = 30; // 30 items per page as requested
+
+    var allCategories = ViewBag.Categories as List<PosSoftware.Models.Entities.Category> ?? new List<PosSoftware.Models.Entities.Category>();
+    int? selectedCatId = ViewBag.SelectedCategoryId as int?;
+    string selectedCatName = ViewBag.SelectedCategoryName as string ?? "";
+
+    // Chunk products into pages of 30 items
+    var pages = Model
+        .Select((item, index) => new { item, index })
+        .GroupBy(x => x.index / pageSize)
+        .Select(g => g.Select(x => x.item).ToList())
+        .ToList();
+
+    if (!pages.Any())
+    {
+        pages.Add(new List<PosSoftware.Models.Entities.Product>());
+    }
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ASM ENTERPRISE - Order Form @(string.IsNullOrEmpty(selectedCatName) ? "" : $"({selectedCatName})")</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" />
+    <style>
+        @@page {
+            size: A4 portrait;
+            margin: 8mm 10mm;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-size: 8.5pt;
+            color: #000;
+            background: #f1f5f9;
+            margin: 0;
+            padding: 15px;
+        }
+        .no-print-bar {
+            max-width: 210mm;
+            margin: 0 auto 15px auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+            background: #fff;
+            padding: 10px 16px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+        .order-sheet {
+            max-width: 210mm;
+            margin: 0 auto 20px auto;
+            background: #fff;
+            padding: 10mm 12mm;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            border: 1px solid #cbd5e1;
+            page-break-after: always;
+        }
+        .order-sheet:last-child {
+            page-break-after: avoid;
+        }
+        .company-header {
+            text-align: center;
+            margin-bottom: 6px;
+        }
+        .company-name {
+            font-size: 20pt;
+            font-weight: 900;
+            color: #004085;
+            letter-spacing: 0.5px;
+            margin: 0;
+            text-transform: uppercase;
+        }
+        .company-address {
+            font-size: 9pt;
+            font-weight: 600;
+            color: #333;
+            margin-top: 2px;
+        }
+        .order-badge {
+            display: inline-block;
+            background: #004085;
+            color: #fff;
+            font-size: 9.5pt;
+            font-weight: bold;
+            padding: 2px 24px;
+            border-radius: 14px;
+            margin-top: 4px;
+            letter-spacing: 0.5px;
+        }
+        .customer-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            margin-top: 10px;
+            margin-bottom: 8px;
+            font-size: 8.5pt;
+            line-height: 1.7;
+        }
+        .meta-left {
+            flex: 1;
+        }
+        .meta-right {
+            width: 220px;
+            text-align: right;
+        }
+        .dots {
+            border-bottom: 1px dotted #555;
+            display: inline-block;
+            min-width: 200px;
+        }
+        .order-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 8pt;
+            margin-bottom: 10px;
+        }
+        .order-table th, .order-table td {
+            border: 1px solid #333;
+            padding: 3px 6px;
+            vertical-align: middle;
+        }
+        .order-table thead th {
+            background: #f1f5f9;
+            font-weight: bold;
+            text-align: center;
+            font-size: 8pt;
+            color: #0f172a;
+        }
+        .cat-heading-row td {
+            background: #e2e8f0;
+            font-weight: bold;
+            text-align: center;
+            font-size: 8.5pt;
+            color: #0f172a;
+            letter-spacing: 0.5px;
+            padding: 3px;
+        }
+        .col-sl {
+            width: 42px;
+            text-align: center;
+            font-weight: bold;
+        }
+        .col-name {
+            text-align: left;
+            font-weight: 500;
+        }
+        .col-price {
+            width: 75px;
+            text-align: right;
+        }
+        .col-qty {
+            width: 60px;
+            text-align: center;
+        }
+        .col-val {
+            width: 85px;
+            text-align: right;
+        }
+        
+        .qty-input {
+            width: 100%;
+            border: none;
+            background: transparent;
+            text-align: center;
+            font-size: 8pt;
+            padding: 0;
+            margin: 0;
+            font-weight: bold;
+        }
+        .qty-input:focus {
+            outline: 1px solid #004085;
+            background: #e0f2fe;
+        }
+
+        .signatures-row {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 30px;
+            padding: 0 10px;
+        }
+        .sig-block {
+            width: 130px;
+            text-align: center;
+            border-top: 1px solid #333;
+            padding-top: 4px;
+            font-size: 8.5pt;
+            font-weight: bold;
+            color: #222;
+        }
+
+        @@media print {
+            body {
+                background: #fff;
+                padding: 0;
+            }
+            .no-print-bar {
+                display: none !important;
+            }
+            .order-sheet {
+                border: none;
+                box-shadow: none;
+                padding: 0;
+                margin: 0 0 20mm 0;
+                max-width: 100%;
+            }
+            .order-table th, .order-table td {
+                border-color: #000 !important;
+            }
+            .qty-input {
+                outline: none !important;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Top Toolbar (Hidden during print) -->
+    <div class="no-print-bar">
+        <div class="d-flex align-items-center gap-2">
+            <a href="@Url.Action("Index", "Product")" class="btn btn-sm btn-outline-secondary">
+                <i class="bi bi-arrow-left"></i> Back to Products
+            </a>
+            <span class="fw-bold text-dark ms-2">Category:</span>
+            <select class="form-select form-select-sm d-inline-block w-auto" onchange="filterByCategory(this.value)">
+                <option value="">-- All Categories --</option>
+                @foreach (var c in allCategories)
+                {
+                    if (selectedCatId.HasValue && selectedCatId.Value == c.Id)
+                    {
+                        <option value="@c.Id" selected>@c.Name</option>
+                    }
+                    else
+                    {
+                        <option value="@c.Id">@c.Name</option>
+                    }
+                }
+            </select>
+        </div>
+
+        <div class="d-flex align-items-center gap-2">
+            <span class="badge bg-light text-dark border">
+                Total Products: <strong>@totalCount</strong>
+            </span>
+            <span class="badge bg-primary text-white">
+                Pages: <strong>@pages.Count</strong> (30/page)
+            </span>
+            <button onclick="window.print()" class="btn btn-sm btn-primary d-flex align-items-center gap-1">
+                <i class="bi bi-printer"></i> Print Order Form
+            </button>
+            <button onclick="clearQuantities()" class="btn btn-sm btn-outline-danger">
+                Reset
+            </button>
+        </div>
+    </div>
+
+    <!-- Printable Sheets (30 items per page, rows running vertically top-to-bottom) -->
+    @for (int pIdx = 0; pIdx < pages.Count; pIdx++)
+    {
+        var pageItems = pages[pIdx];
+        int startSl = (pIdx * pageSize) + 1;
+
+        <div class="order-sheet">
+            <!-- Header -->
+            <div class="company-header">
+                <h1 class="company-name">ASM ENTERPRISE</h1>
+                <div class="company-address">Motlab Tower, Chowk Bazar, Dhaka-1211.</div>
+                <div class="order-badge">Order Form</div>
+            </div>
+
+            <!-- Customer Metadata -->
+            <div class="customer-meta">
+                <div class="meta-left">
+                    <div>Name : <span class="dots" style="min-width: 280px;">&nbsp;</span></div>
+                    <div>Address : <span class="dots" style="min-width: 270px;">&nbsp;</span></div>
+                    <div>Mobile : <span class="dots" style="min-width: 210px;">&nbsp;</span></div>
+                </div>
+                <div class="meta-right">
+                    <div>Date : <span class="dots" style="min-width: 130px;">&nbsp;</span></div>
+                    @if (!string.IsNullOrEmpty(selectedCatName))
+                    {
+                        <div class="mt-1 text-primary fw-bold" style="font-size: 8.5pt;">Category: @selectedCatName</div>
+                    }
+                    @if (pages.Count > 1)
+                    {
+                        <div class="text-muted small">Page @(pIdx + 1) of @pages.Count</div>
+                    }
+                </div>
+            </div>
+
+            <!-- Single Full-Width Table (Rows running top-to-bottom) -->
+            <table class="order-table">
+                <thead>
+                    <tr>
+                        <th class="col-sl">Sl. No.</th>
+                        <th class="col-name">Item Name</th>
+                        <th class="col-price">T. Price</th>
+                        <th class="col-qty">Qty.</th>
+                        <th class="col-val">Value</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @{
+                        string currentCat = "";
+                        int currentSl = startSl;
+
+                        foreach (var item in pageItems)
+                        {
+                            var cat = item.Category?.Name ?? (string.IsNullOrEmpty(selectedCatName) ? "General" : selectedCatName);
+                            if (cat != currentCat)
+                            {
+                                currentCat = cat;
+                                <tr class="cat-heading-row">
+                                    <td colspan="5">@currentCat</td>
+                                </tr>
+                            }
+                            <tr>
+                                <td class="col-sl">@currentSl</td>
+                                <td class="col-name" title="@item.SKU">@item.Name</td>
+                                <td class="col-price" data-price="@item.SellingPrice"></td>
+                                <td class="col-qty">
+                                    <input type="text" class="qty-input" data-sl="@currentSl" oninput="calculateRow(this)" />
+                                </td>
+                                <td class="col-val row-val" id="val-@currentSl"></td>
+                            </tr>
+                            currentSl++;
+                        }
+
+                        // Pad remaining rows up to 30 if this page has fewer than 30 items
+                        int renderedCount = pageItems.Count;
+                        for (int emptyRow = renderedCount + 1; emptyRow <= pageSize; emptyRow++)
+                        {
+                            int emptySl = (pIdx * pageSize) + emptyRow;
+                            <tr>
+                                <td class="col-sl text-muted">@emptySl</td>
+                                <td class="col-name text-muted">&nbsp;</td>
+                                <td class="col-price"></td>
+                                <td class="col-qty"></td>
+                                <td class="col-val"></td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+
+            <!-- Four Signatures matching Official Order Form -->
+            <div class="signatures-row">
+                <div class="sig-block">Order by</div>
+                <div class="sig-block">Sales Officer</div>
+                <div class="sig-block">Delivered by</div>
+                <div class="sig-block">Received by</div>
+            </div>
+        </div>
+    }
+
+    <script>
+        function filterByCategory(catId) {
+            if (catId) {
+                window.location.href = '@Url.Action("CategoryWiseReport", "Product")?categoryId=' + encodeURIComponent(catId);
+            } else {
+                window.location.href = '@Url.Action("CategoryWiseReport", "Product")';
+            }
+        }
+
+        function calculateRow(input) {
+            const row = input.closest('tr');
+            const priceCell = row.querySelector('.col-price');
+            const valCell = row.querySelector('.col-val');
+            const price = parseFloat(priceCell.getAttribute('data-price')) || 0;
+            const qty = parseFloat(input.value) || 0;
+            if (qty > 0 && price > 0) {
+                valCell.innerText = (price * qty).toFixed(2);
+            } else {
+                valCell.innerText = '';
+            }
+        }
+
+        function clearQuantities() {
+            document.querySelectorAll('.qty-input').forEach(i => i.value = '');
+            document.querySelectorAll('.row-val').forEach(v => v.innerText = '');
+        }
+    </script>
+</body>
+</html>

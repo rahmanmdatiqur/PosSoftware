@@ -1,0 +1,101 @@
+@model List<PosSoftware.Models.Entities.Product>
+@{
+    ViewData["Title"] = "Products";
+}
+
+<div class="container-fluid p-0">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h4 class="fw-bold text-dark m-0">Products & Distribution Catalog</h4>
+            <span class="text-muted small">Manage distribution items, images, brands/specifications, barcodes, and rates</span>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+            <a href="@Url.Action("CategoryWiseReport", "Product", new { categoryId = ViewBag.SelectedCategoryId })" target="_blank" class="btn btn-outline-primary d-inline-flex align-items-center gap-1 shadow-sm">
+                <i class="bi bi-printer-fill"></i> Category Wise Product Report
+            </a>
+            <a href="@Url.Action("Create", "Product")" class="btn btn-theme-new">
+                <i class="bi bi-plus-lg me-1"></i> Add Product
+            </a>
+        </div>
+    </div>
+
+    <!-- Filter -->
+    <div class="card border-0 shadow-sm p-3 mb-3 bg-white rounded-3">
+        <form method="get" class="row g-2 align-items-center">
+            <div class="col-md-5">
+                <input type="text" name="search" value="@ViewBag.SearchTerm" class="form-control form-control-sm" placeholder="Search product name, specification, barcode, SKU (ASM-001...)..." />
+            </div>
+            <div class="col-md-4">
+                <select name="categoryId" asp-items="ViewBag.Categories" class="form-select form-select-sm" onchange="this.form.submit()">
+                    <option value="">-- All Categories --</option>
+                </select>
+            </div>
+            <div class="col-md-3 d-flex gap-2">
+                <button type="submit" class="btn btn-sm btn-primary flex-fill"><i class="bi bi-funnel"></i> Filter</button>
+                <a href="@Url.Action("CategoryWiseReport", "Product", new { categoryId = ViewBag.SelectedCategoryId })" target="_blank" class="btn btn-sm btn-outline-secondary d-flex align-items-center gap-1" title="Print Category Report">
+                    <i class="bi bi-printer"></i> Report
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <!-- Table -->
+    <div class="card border-0 shadow-sm rounded-3 bg-white">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th style="width: 50px;">Image</th>
+                        <th>Product Name</th>
+                        <th>Specification</th>
+                        <th>Code / Barcode</th>
+                        <th>Category</th>
+                        <th class="text-end">Cost</th>
+                        <th class="text-end">Selling Price</th>
+                        <th class="text-center">Stock</th>
+                        <th>Status</th>
+                        <th class="text-center">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var p in Model)
+                    {
+                        <tr>
+                            <td>
+                                <img src="@(string.IsNullOrEmpty(p.ImageUrl) ? "/uploads/products/pharma-item.svg" : p.ImageUrl)" 
+                                     alt="@p.Name" 
+                                     class="rounded border shadow-xs" 
+                                     style="width: 38px; height: 38px; object-fit: contain; background: #fff;" />
+                            </td>
+                            <td>
+                                <div class="fw-bold text-dark">@p.Name</div>
+                                <small class="text-muted">SKU: @p.SKU</small>
+                            </td>
+                            <td class="text-muted small">@(p.GenericName ?? "-")</td>
+                            <td><code>@p.Barcode</code></td>
+                            <td>@(p.Category?.Name ?? "-")</td>
+                            <td class="text-end text-muted">৳ @p.CostPrice.ToString("N2")</td>
+                            <td class="text-end fw-bold text-primary">৳ @p.SellingPrice.ToString("N2")</td>
+                            <td class="text-center">
+                                <span class="badge @(p.CurrentStock <= 0 ? "bg-danger" : p.CurrentStock <= p.MinAlertStock ? "bg-warning text-dark" : "bg-success")">
+                                    @p.CurrentStock @(p.Unit?.ShortCode ?? "pcs")
+                                </span>
+                            </td>
+                            <td>
+                                <span class="badge @(p.IsActive ? "bg-success" : "bg-secondary")">
+                                    @(p.IsActive ? "Active" : "Archived")
+                                </span>
+                            </td>
+                            <td class="text-center">
+                                <a href="@Url.Action("Edit", "Product", new { id = p.Id })" class="btn btn-sm btn-outline-primary p-1 px-2" title="Edit Product">
+                                    <i class="bi bi-pencil-square"></i>
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        <partial name="_GridPager" />
+    </div>
+</div>

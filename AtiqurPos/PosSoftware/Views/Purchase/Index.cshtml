@@ -1,0 +1,246 @@
+@model List<PosSoftware.Models.Entities.Purchase>
+@{
+    ViewData["Title"] = "Purchase List";
+}
+
+<style>
+    .page-title {
+        font-size: 1.35rem;
+        font-weight: 700;
+        color: #212529;
+        margin-bottom: 12px;
+    }
+    .action-bar {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 16px;
+    }
+    .grid-container {
+        background: #fff;
+        border: 1px solid #cfd8dc;
+        border-radius: 4px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+    .grid-header {
+        background-color: #546e7a;
+        color: #ffffff;
+        padding: 8px 14px;
+        font-size: 0.88rem;
+        font-weight: 600;
+        border-top-left-radius: 4px;
+        border-top-right-radius: 4px;
+    }
+    .filter-bar {
+        background: #f8fafc;
+        padding: 10px 14px;
+        border-bottom: 1px solid #e2e8f0;
+    }
+    .group-banner {
+        background: #edf2f7;
+        font-size: 0.76rem;
+        color: #64748b;
+        padding: 5px 14px;
+        border-bottom: 1px solid #e2e8f0;
+    }
+    .table-purchase thead th {
+        background-color: #e8eef3;
+        color: #374151;
+        font-size: 0.82rem;
+        font-weight: 600;
+        border-bottom: 1px solid #cbd5e1;
+        padding: 7px 10px;
+        white-space: nowrap;
+    }
+    .table-purchase tbody td {
+        font-size: 0.84rem;
+        padding: 6px 10px;
+        vertical-align: middle;
+        border-bottom: 1px solid #f1f5f9;
+        white-space: nowrap;
+    }
+    .table-purchase tbody tr:hover {
+        background-color: #f0f7ff;
+    }
+    .btn-action-edit {
+        background-color: #007bff;
+        border: none;
+        color: #fff;
+        padding: 2px 7px;
+        border-radius: 3px;
+        font-size: 0.78rem;
+    }
+    .btn-action-edit:hover {
+        background-color: #0056b3;
+        color: #fff;
+    }
+    .btn-action-report {
+        background-color: #28a745;
+        border: none;
+        color: #fff;
+        padding: 2px 7px;
+        border-radius: 3px;
+        font-size: 0.78rem;
+    }
+    .btn-action-report:hover {
+        background-color: #1e7e34;
+        color: #fff;
+    }
+</style>
+
+<!-- Title matching Screenshot 8 -->
+<div class="page-title">Purchase List</div>
+
+<!-- Action Buttons matching Screenshot 8 -->
+<div class="action-bar">
+    <a href="@Url.Action("Create", "Purchase")" class="btn btn-theme-new">
+        <i class="bi bi-plus-lg"></i> New
+    </a>
+    <button type="button" class="btn btn-theme-post" onclick="bulkPostPurchases()">
+        <i class="bi bi-check-lg"></i> Post
+    </button>
+</div>
+
+<!-- List Of Data Card matching Screenshot 8 -->
+<div class="grid-container">
+    <div class="grid-header">
+        List Of Data
+    </div>
+
+    <!-- Search Input -->
+    <div class="filter-bar">
+        <form method="get" class="d-flex align-items-center gap-2 m-0" style="max-width: 320px;">
+            <div class="input-group input-group-sm">
+                <input type="text" name="search" class="form-control" placeholder="Search..." value="@ViewBag.SearchTerm" />
+                <button type="submit" class="btn btn-outline-secondary">
+                    <i class="bi bi-search"></i>
+                </button>
+            </div>
+            @if (!string.IsNullOrEmpty(ViewBag.SearchTerm))
+            {
+                <a href="@Url.Action("Index", "Purchase")" class="btn btn-sm btn-link text-muted p-0">Clear</a>
+            }
+        </form>
+    </div>
+
+    <div class="group-banner">
+        Drag a column header and drop it here to group by that column
+    </div>
+
+    <!-- Table matching Screenshot 8 -->
+    <div class="table-responsive">
+        <table class="table table-purchase mb-0">
+            <thead>
+                <tr>
+                    <th style="width: 30px;">
+                        <input type="checkbox" id="selectAllCheckbox" onchange="toggleSelectAll(this)" />
+                    </th>
+                    <th style="width: 80px;">Action</th>
+                    <th>Invoice No</th>
+                    <th>Supplier</th>
+                    <th>Purchase Date</th>
+                    <th>Receive Date</th>
+                    <th>Total Qty</th>
+                    <th>Total Amount</th>
+                    <th>Posted</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model == null || !Model.Any())
+                {
+                    <tr>
+                        <td colspan="9" class="text-center py-4 text-muted">No purchase records found.</td>
+                    </tr>
+                }
+                else
+                {
+                    foreach (var p in Model)
+                    {
+                        <tr>
+                            <td>
+                                <input type="checkbox" class="purchase-checkbox" value="@p.Id" />
+                            </td>
+                            <td>
+                                <div class="d-flex gap-1">
+                                    @if (!p.IsPosted)
+                                    {
+                                        <a href="@Url.Action("Edit", "Purchase", new { id = p.Id })" class="btn-action-edit" title="Edit Purchase">
+                                            <i class="bi bi-pencil-fill"></i>
+                                        </a>
+                                    }
+                                    <a href="@Url.Action("GetReport", "Purchase", new { id = p.Id })" class="btn-action-report" title="HTML Purchase Invoice Report">
+                                        <i class="bi bi-file-earmark-text-fill"></i>
+                                    </a>
+                                </div>
+                            </td>
+                            <td class="fw-bold text-dark">@p.PurchaseNo</td>
+                            <td class="fw-semibold">@(p.Supplier?.Name ?? "Supplier")</td>
+                            <td>@p.PurchaseDate.ToString("yyyy-MM-dd")</td>
+                            <td>@p.ReceiveDate.ToString("yyyy-MM-dd")</td>
+                            <td>@p.TotalQty</td>
+                            <td class="fw-bold">@p.TotalAmount.ToString("N2")</td>
+                            <td>
+                                @if (p.IsPosted)
+                                {
+                                    <span class="badge bg-success fw-semibold"><i class="bi bi-check-circle me-1"></i>Posted</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-warning text-dark fw-semibold"><i class="bi bi-clock me-1"></i>Unposted</span>
+                                }
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+    <partial name="_GridPager" />
+</div>
+
+@section Scripts {
+<script>
+    function toggleSelectAll(master) {
+        document.querySelectorAll('.purchase-checkbox').forEach(cb => cb.checked = master.checked);
+    }
+
+    function bulkPostPurchases() {
+        const checked = Array.from(document.querySelectorAll('.purchase-checkbox:checked')).map(cb => parseInt(cb.value));
+        if (checked.length === 0) {
+            Swal.fire('Info', 'Please select at least one purchase order to post.', 'info');
+            return;
+        }
+        Swal.fire({
+            title: 'Post Purchases?',
+            text: `Mark ${checked.length} purchase(s) as Posted? Once posted, their update button will be hidden and they cannot be edited.`,
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonText: 'Yes, Post',
+            confirmButtonColor: '#ffc107',
+            cancelButtonText: 'Cancel'
+        }).then(async (res) => {
+            if (res.isConfirmed) {
+                try {
+                    const resp = await fetch('@Url.Action("BulkPost", "Purchase")', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(checked)
+                    });
+                    const result = await resp.json();
+                    if (result.success) {
+                        Swal.fire('Success', result.message || 'Purchases posted successfully!', 'success')
+                            .then(() => location.reload());
+                    } else {
+                        Swal.fire('Error', result.message || 'Failed to post purchases.', 'error');
+                    }
+                } catch (e) {
+                    Swal.fire('Error', 'Server error while posting.', 'error');
+                }
+            }
+        });
+    }
+</script>
+}
+
