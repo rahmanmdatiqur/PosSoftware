@@ -1,0 +1,29 @@
+html {
+  font-size: 14px;
+}
+
+@media (min-width: 768px) {
+  html {
+    font-size: 16px;
+  }
+}
+
+.btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
+  box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #2563eb;
+}
+
+@media print {
+  @page {
+    size: auto;
+    margin: 0mm;
+  }
+  body {
+    margin: 0mm !important;
+  }
+  .no-print, .no-print-bar, .btn-print, .btn-back {
+    display: none !important;
+  }
+  a[href]:after {
+    content: none !important;
+  }
+}
