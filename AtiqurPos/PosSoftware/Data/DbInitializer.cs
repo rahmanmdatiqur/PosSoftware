@@ -246,212 +246,35 @@ namespace PosSoftware.Data
                 context.SaveChanges();
             }
 
-            // 5. Seed Purchases if empty
-            if (!context.Purchases.Any())
+            // 5. Initialize Code & CodeGenerate if empty (Starts fresh from 0 -> INV-00001 & PUR-00001)
+            if (!context.Codes.Any())
             {
-                var s1 = context.Suppliers.FirstOrDefault(s => s.Name.Contains("Jawdan")) ?? context.Suppliers.First();
-                var s2 = context.Suppliers.FirstOrDefault(s => s.Name.Contains("Incepta")) ?? context.Suppliers.First();
-                var s3 = context.Suppliers.FirstOrDefault(s => s.Name.Contains("Nipro")) ?? context.Suppliers.First();
-                var s4 = context.Suppliers.FirstOrDefault(s => s.Name.Contains("Transcom") || s.Name.Contains("SK+F")) ?? context.Suppliers.First();
-
-                var p1 = context.Products.FirstOrDefault(x => x.SKU == "PH-00008") ?? context.Products.First();
-                var p2 = context.Products.FirstOrDefault(x => x.SKU == "PH-00001") ?? context.Products.First();
-
-                var pur1 = new Purchase
+                var codes = new List<Code>
                 {
-                    PurchaseNo = "PUR-00037",
-                    SupplierId = s1.Id,
-                    PurchaseDate = DateTime.UtcNow.AddDays(-4),
-                    ReceiveDate = DateTime.UtcNow.AddDays(-4),
-                    PurchaseOrderNo = "PO-2026-0037",
-                    TotalQty = 4,
-                    SubTotal = 2300.00m,
-                    DiscountAmount = 0.00m,
-                    TotalAmount = 2300.00m,
-                    PaidAmount = 2300.00m,
-                    DueAmount = 0.00m,
-                    Status = "Posted",
-                    IsPosted = true,
-                    CreatedAt = DateTime.UtcNow.AddDays(-4)
+                    new() { CodeGroup = "Sales", CodeName = "Invoice", Prefix = "INV-", Length = 5, Description = "Sales Invoice Auto Numbering", IsActive = true },
+                    new() { CodeGroup = "Purchase", CodeName = "Purchase", Prefix = "PUR-", Length = 5, Description = "Purchase Number Auto Numbering", IsActive = true },
+                    new() { CodeGroup = "Sales", CodeName = "SaleOrder", Prefix = "SO-", Length = 5, Description = "Sales Order Auto Numbering", IsActive = true },
+                    new() { CodeGroup = "Purchase", CodeName = "PurchaseOrder", Prefix = "PO-", Length = 4, Description = "Purchase Order Auto Numbering", IsActive = true }
                 };
-                pur1.PurchaseItems.Add(new PurchaseItem
-                {
-                    ProductId = p1.Id,
-                    ProductName = p1.Name,
-                    ProductCode = p1.SKU,
-                    Quantity = 4,
-                    UnitPrice = 575.00m,
-                    TotalAmount = 2300.00m
-                });
-
-                var pur2 = new Purchase
-                {
-                    PurchaseNo = "PUR-00036",
-                    SupplierId = s2.Id,
-                    PurchaseDate = DateTime.UtcNow.AddDays(-4),
-                    ReceiveDate = DateTime.UtcNow.AddDays(-4),
-                    PurchaseOrderNo = "PO-2026-0036",
-                    TotalQty = 710,
-                    SubTotal = 7260.10m,
-                    DiscountAmount = 0.00m,
-                    TotalAmount = 7260.10m,
-                    PaidAmount = 7260.10m,
-                    DueAmount = 0.00m,
-                    Status = "Posted",
-                    IsPosted = true,
-                    CreatedAt = DateTime.UtcNow.AddDays(-4)
-                };
-                pur2.PurchaseItems.Add(new PurchaseItem
-                {
-                    ProductId = p2.Id,
-                    ProductName = p2.Name,
-                    ProductCode = p2.SKU,
-                    Quantity = 710,
-                    UnitPrice = 10.22m,
-                    TotalAmount = 7260.10m
-                });
-
-                var pur3 = new Purchase
-                {
-                    PurchaseNo = "PUR-00035",
-                    SupplierId = s3.Id,
-                    PurchaseDate = DateTime.UtcNow.AddDays(-4),
-                    ReceiveDate = DateTime.UtcNow.AddDays(-4),
-                    PurchaseOrderNo = "PO-2026-0035",
-                    TotalQty = 10,
-                    SubTotal = 2420.20m,
-                    DiscountAmount = 0.00m,
-                    TotalAmount = 2420.20m,
-                    PaidAmount = 2420.20m,
-                    DueAmount = 0.00m,
-                    Status = "Posted",
-                    IsPosted = true,
-                    CreatedAt = DateTime.UtcNow.AddDays(-4)
-                };
-
-                var pur4 = new Purchase
-                {
-                    PurchaseNo = "PUR-00034",
-                    SupplierId = s4.Id,
-                    PurchaseDate = DateTime.UtcNow.AddDays(-4),
-                    ReceiveDate = DateTime.UtcNow.AddDays(-4),
-                    PurchaseOrderNo = "PO-2026-0034",
-                    TotalQty = 1208,
-                    SubTotal = 20985.44m,
-                    DiscountAmount = 0.00m,
-                    TotalAmount = 20985.44m,
-                    PaidAmount = 20985.44m,
-                    DueAmount = 0.00m,
-                    Status = "Posted",
-                    IsPosted = true,
-                    CreatedAt = DateTime.UtcNow.AddDays(-4)
-                };
-
-                context.Purchases.AddRange(pur1, pur2, pur3, pur4);
+                context.Codes.AddRange(codes);
                 context.SaveChanges();
             }
 
-            // 6. Seed Sales matching screenshot
-            if (!context.Sales.Any())
+            if (!context.CodeGenerates.Any())
             {
-                var walkIn = context.Customers.FirstOrDefault(c => c.Name == "Walk-in") ?? context.Customers.First();
-                var pDermasol = context.Products.FirstOrDefault(p => p.SKU == "PH-00008") ?? context.Products.First();
-                var pLosectil = context.Products.FirstOrDefault(p => p.SKU == "PH-00009") ?? context.Products.First();
+                var cInvoice = context.Codes.FirstOrDefault(c => c.CodeName == "Invoice");
+                var cPurchase = context.Codes.FirstOrDefault(c => c.CodeName == "Purchase");
+                var cSo = context.Codes.FirstOrDefault(c => c.CodeName == "SaleOrder");
+                var cPo = context.Codes.FirstOrDefault(c => c.CodeName == "PurchaseOrder");
 
-                var sale1 = new Sale
+                var codeGens = new List<CodeGenerate>
                 {
-                    InvoiceNumber = "INV-00224",
-                    SaleDate = DateTime.UtcNow.AddDays(-1),
-                    CustomerId = walkIn.Id,
-                    CustomerType = "Walk-in",
-                    FundType = "Cash",
-                    SubTotal = 85.50m,
-                    TaxRate = 0,
-                    TaxAmount = 0,
-                    DiscountPercent = 0,
-                    DiscountAmount = 0,
-                    RoundUp = 0.50m,
-                    FinalPayable = 85.00m,
-                    GrandTotal = 85.00m,
-                    PaidAmount = 85.00m,
-                    ChangeAmount = 0,
-                    DuesAmount = 0,
-                    PaymentMethod = "Cash",
-                    Status = "Completed",
-                    IsPosted = true
+                    new() { CodeId = cInvoice?.Id, CodeName = "Invoice", CurrentYear = DateTime.UtcNow.Year, Prefix = "INV-", LastId = 0, LastCode = "INV-00000", LastUpdated = DateTime.UtcNow },
+                    new() { CodeId = cPurchase?.Id, CodeName = "Purchase", CurrentYear = DateTime.UtcNow.Year, Prefix = "PUR-", LastId = 0, LastCode = "PUR-00000", LastUpdated = DateTime.UtcNow },
+                    new() { CodeId = cSo?.Id, CodeName = "SaleOrder", CurrentYear = DateTime.UtcNow.Year, Prefix = "SO-", LastId = 0, LastCode = "SO-00000", LastUpdated = DateTime.UtcNow },
+                    new() { CodeId = cPo?.Id, CodeName = "PurchaseOrder", CurrentYear = DateTime.UtcNow.Year, Prefix = $"PO-{DateTime.UtcNow.Year}-", LastId = 0, LastCode = "PO-0000", LastUpdated = DateTime.UtcNow }
                 };
-                sale1.SaleItems.Add(new SaleItem
-                {
-                    ProductId = pDermasol.Id,
-                    ProductName = "Dermasol Oint 20g T",
-                    UnitPrice = 75.50m,
-                    CostPrice = 55.00m,
-                    Quantity = 1,
-                    SubTotal = 75.50m,
-                    DiscountAmount = 0,
-                    TotalAmount = 75.50m
-                });
-                sale1.SaleItems.Add(new SaleItem
-                {
-                    ProductId = pLosectil.Id,
-                    ProductName = "LOSECTIL 20MG CAP",
-                    UnitPrice = 5.00m,
-                    CostPrice = 3.50m,
-                    Quantity = 2,
-                    SubTotal = 10.00m,
-                    DiscountAmount = 0,
-                    TotalAmount = 10.00m
-                });
-
-                var sale2 = new Sale
-                {
-                    InvoiceNumber = "INV-00223",
-                    SaleDate = DateTime.UtcNow.AddDays(-1),
-                    CustomerId = walkIn.Id,
-                    CustomerType = "Walk-in",
-                    SubTotal = 288.50m,
-                    GrandTotal = 288.00m,
-                    FinalPayable = 288.00m,
-                    PaidAmount = 288.00m,
-                    DuesAmount = 0.00m,
-                    PaymentMethod = "Cash",
-                    Status = "Completed",
-                    IsPosted = true
-                };
-
-                var sale3 = new Sale
-                {
-                    InvoiceNumber = "INV-00222",
-                    SaleDate = DateTime.UtcNow.AddDays(-2),
-                    CustomerId = walkIn.Id,
-                    CustomerType = "Walk-in",
-                    SubTotal = 24.00m,
-                    GrandTotal = 24.00m,
-                    FinalPayable = 24.00m,
-                    PaidAmount = 24.00m,
-                    DuesAmount = 0.00m,
-                    PaymentMethod = "Cash",
-                    Status = "Completed",
-                    IsPosted = true
-                };
-
-                var sale4 = new Sale
-                {
-                    InvoiceNumber = "INV-00221",
-                    SaleDate = DateTime.UtcNow.AddDays(-2),
-                    CustomerId = walkIn.Id,
-                    CustomerType = "Walk-in",
-                    SubTotal = 174.00m,
-                    GrandTotal = 174.00m,
-                    FinalPayable = 174.00m,
-                    PaidAmount = 174.00m,
-                    DuesAmount = 0.00m,
-                    PaymentMethod = "Cash",
-                    Status = "Completed",
-                    IsPosted = true
-                };
-
-                context.Sales.AddRange(sale1, sale2, sale3, sale4);
+                context.CodeGenerates.AddRange(codeGens);
                 context.SaveChanges();
             }
         }
