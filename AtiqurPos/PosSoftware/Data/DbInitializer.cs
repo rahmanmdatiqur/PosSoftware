@@ -1,3 +1,4 @@
+using Microsoft.EntityFrameworkCore;
 using PosSoftware.Models.Entities;
 using PosSoftware.Services;
 
@@ -8,6 +9,41 @@ namespace PosSoftware.Data
         public static void Initialize(ApplicationDbContext context)
         {
             context.Database.EnsureCreated();
+
+            // Auto-create synonyms so both Users/AppUsers, Roles/AppRoles, ModulePages/AppModulePages work seamlessly
+            try
+            {
+                context.Database.ExecuteSqlRaw(@"
+                    IF NOT EXISTS (SELECT * FROM sys.synonyms WHERE name = 'AppUsers') AND NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'AppUsers') AND EXISTS (SELECT * FROM sys.tables WHERE name = 'Users')
+                        CREATE SYNONYM AppUsers FOR dbo.Users;
+                    IF NOT EXISTS (SELECT * FROM sys.synonyms WHERE name = 'AppRoles') AND NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'AppRoles') AND EXISTS (SELECT * FROM sys.tables WHERE name = 'Roles')
+                        CREATE SYNONYM AppRoles FOR dbo.Roles;
+                    IF NOT EXISTS (SELECT * FROM sys.synonyms WHERE name = 'AppModulePages') AND NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'AppModulePages') AND EXISTS (SELECT * FROM sys.tables WHERE name = 'ModulePages')
+                        CREATE SYNONYM AppModulePages FOR dbo.ModulePages;
+
+                    IF NOT EXISTS (SELECT * FROM sys.synonyms WHERE name = 'Sales') AND NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'Sales') AND EXISTS (SELECT * FROM sys.tables WHERE name = 'SalesMaster')
+                        CREATE SYNONYM Sales FOR dbo.SalesMaster;
+                    IF NOT EXISTS (SELECT * FROM sys.synonyms WHERE name = 'SaleItems') AND NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'SaleItems') AND EXISTS (SELECT * FROM sys.tables WHERE name = 'SalesDetails')
+                        CREATE SYNONYM SaleItems FOR dbo.SalesDetails;
+                    IF NOT EXISTS (SELECT * FROM sys.synonyms WHERE name = 'Purchases') AND NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'Purchases') AND EXISTS (SELECT * FROM sys.tables WHERE name = 'PurchaseMaster')
+                        CREATE SYNONYM Purchases FOR dbo.PurchaseMaster;
+                    IF NOT EXISTS (SELECT * FROM sys.synonyms WHERE name = 'PurchaseItems') AND NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'PurchaseItems') AND EXISTS (SELECT * FROM sys.tables WHERE name = 'PurchaseDetails')
+                        CREATE SYNONYM PurchaseItems FOR dbo.PurchaseDetails;
+
+                    IF NOT EXISTS (SELECT * FROM sys.synonyms WHERE name = 'SalesMaster') AND NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'SalesMaster') AND EXISTS (SELECT * FROM sys.tables WHERE name = 'Sales')
+                        CREATE SYNONYM SalesMaster FOR dbo.Sales;
+                    IF NOT EXISTS (SELECT * FROM sys.synonyms WHERE name = 'SalesDetails') AND NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'SalesDetails') AND EXISTS (SELECT * FROM sys.tables WHERE name = 'SaleItems')
+                        CREATE SYNONYM SalesDetails FOR dbo.SaleItems;
+                    IF NOT EXISTS (SELECT * FROM sys.synonyms WHERE name = 'PurchaseMaster') AND NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'PurchaseMaster') AND EXISTS (SELECT * FROM sys.tables WHERE name = 'Purchases')
+                        CREATE SYNONYM PurchaseMaster FOR dbo.Purchases;
+                    IF NOT EXISTS (SELECT * FROM sys.synonyms WHERE name = 'PurchaseDetails') AND NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'PurchaseDetails') AND EXISTS (SELECT * FROM sys.tables WHERE name = 'PurchaseItems')
+                        CREATE SYNONYM PurchaseDetails FOR dbo.PurchaseItems;
+                ");
+            }
+            catch
+            {
+                // Ignore if permission restricted
+            }
 
             // 1. Roles & Users
             if (!context.Roles.Any())

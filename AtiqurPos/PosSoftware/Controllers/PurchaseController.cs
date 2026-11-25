@@ -179,6 +179,7 @@ namespace PosSoftware.Controllers
 
             _context.Purchases.Add(purchase);
             await _context.SaveChangesAsync();
+            await _sequenceService.UpdateLastPurchaseNumberAsync(purchase.PurchaseNo);
 
             return Json(new
             {

@@ -291,4 +291,36 @@ namespace PosSoftware.Models.ViewModels
 
         public bool IsActive { get; set; } = true;
     }
+
+    public class StockReportViewModel
+    {
+        public DateTime AsOfDate { get; set; } = DateTime.UtcNow;
+        public int? SelectedCategoryId { get; set; }
+        public string SelectedCategoryName { get; set; } = "All Categories";
+        public List<Category> Categories { get; set; } = new();
+        public List<StockReportItemDto> Items { get; set; } = new();
+
+        public int TotalItems => Items.Count;
+        public int TotalStockQty => Items.Sum(i => i.CurrentStock);
+        public decimal TotalCostValue => Items.Sum(i => i.TotalCostValue);
+        public decimal TotalSaleValue => Items.Sum(i => i.TotalSaleValue);
+    }
+
+    public class StockReportItemDto
+    {
+        public int ProductId { get; set; }
+        public string SKU { get; set; } = string.Empty;
+        public string Barcode { get; set; } = string.Empty;
+        public string ProductName { get; set; } = string.Empty;
+        public string? GenericName { get; set; }
+        public string CategoryName { get; set; } = string.Empty;
+        public string UnitName { get; set; } = string.Empty;
+        public decimal CostPrice { get; set; }
+        public decimal SellingPrice { get; set; }
+        public int CurrentStock { get; set; }
+        public int MinAlertStock { get; set; }
+        public decimal TotalCostValue => CurrentStock * CostPrice;
+        public decimal TotalSaleValue => CurrentStock * SellingPrice;
+        public string Status => CurrentStock <= 0 ? "Out of Stock" : (CurrentStock <= MinAlertStock ? "Low Stock" : "In Stock");
+    }
 }

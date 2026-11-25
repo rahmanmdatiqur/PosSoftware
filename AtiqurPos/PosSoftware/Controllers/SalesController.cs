@@ -202,6 +202,7 @@ namespace PosSoftware.Controllers
 
             _context.Sales.Add(sale);
             await _context.SaveChangesAsync();
+            await _sequenceService.UpdateLastInvoiceNumberAsync(sale.InvoiceNumber);
 
             return Json(new
             {

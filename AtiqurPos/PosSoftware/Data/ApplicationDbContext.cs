@@ -34,14 +34,18 @@ namespace PosSoftware.Data
         public DbSet<Purchase> Purchases => Set<Purchase>();
         public DbSet<PurchaseItem> PurchaseItems => Set<PurchaseItem>();
 
+        // Auto Code Generation
+        public DbSet<Code> Codes => Set<Code>();
+        public DbSet<CodeGenerate> CodeGenerates => Set<CodeGenerate>();
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
 
-            // ── Table name mappings (EF default ≠ actual DB table names) ──
-            modelBuilder.Entity<AppRole>().ToTable("AppRoles");
-            modelBuilder.Entity<AppUser>().ToTable("AppUsers");
-            modelBuilder.Entity<AppModulePage>().ToTable("AppModulePages");
+            // ── Table name mappings (matching database tables) ──
+            modelBuilder.Entity<AppRole>().ToTable("Roles");
+            modelBuilder.Entity<AppUser>().ToTable("Users");
+            modelBuilder.Entity<AppModulePage>().ToTable("ModulePages");
             modelBuilder.Entity<RolePermission>().ToTable("RolePermissions");
             modelBuilder.Entity<Category>().ToTable("Categories");
             modelBuilder.Entity<Unit>().ToTable("Units");
@@ -51,10 +55,12 @@ namespace PosSoftware.Data
             modelBuilder.Entity<StockAdjustment>().ToTable("StockAdjustments");
             modelBuilder.Entity<StockAdjustmentItem>().ToTable("StockAdjustmentItems");
             modelBuilder.Entity<Customer>().ToTable("Customers");
-            modelBuilder.Entity<Sale>().ToTable("Sales");
-            modelBuilder.Entity<SaleItem>().ToTable("SaleItems");
-            modelBuilder.Entity<Purchase>().ToTable("Purchases");
-            modelBuilder.Entity<PurchaseItem>().ToTable("PurchaseItems");
+            modelBuilder.Entity<Sale>().ToTable("SalesMaster");
+            modelBuilder.Entity<SaleItem>().ToTable("SalesDetails");
+            modelBuilder.Entity<Purchase>().ToTable("PurchaseMaster");
+            modelBuilder.Entity<PurchaseItem>().ToTable("PurchaseDetails");
+            modelBuilder.Entity<Code>().ToTable("Code");
+            modelBuilder.Entity<CodeGenerate>().ToTable("CodeGenerate");
 
             // Indexes
             modelBuilder.Entity<AppUser>()

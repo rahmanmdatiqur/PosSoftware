@@ -21,7 +21,7 @@
     <style>
         @@page {
             size: A4 portrait;
-            margin: 6mm 8mm;
+            margin: 0mm;
         }
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -168,9 +168,14 @@
         }
 
         @@media print {
-            body {
-                background: #fff;
-                padding: 0;
+            @@page {
+                size: A4 portrait;
+                margin: 0mm;
+            }
+            html, body {
+                background: #fff !important;
+                margin: 0mm !important;
+                padding: 0mm !important;
             }
             .no-print-bar {
                 display: none !important;
@@ -178,11 +183,14 @@
             .order-sheet {
                 border: none;
                 box-shadow: none;
-                padding: 0;
+                padding: 6mm 8mm !important;
                 max-width: 100%;
             }
             .qty-input {
                 outline: none;
+            }
+            a[href]:after {
+                content: none !important;
             }
         }
     </style>

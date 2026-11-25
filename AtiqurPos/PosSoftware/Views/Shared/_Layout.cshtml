@@ -301,6 +301,32 @@
         .grid-table tbody tr:hover {
             background-color: #f8fafc;
         }
+
+        @@media print {
+            @@page {
+                size: auto;
+                margin: 0mm;
+            }
+            body {
+                background: #fff !important;
+                margin: 0mm !important;
+                padding: 10mm 15mm !important;
+            }
+            #sidebar-wrapper, .top-navbar, .no-print, .no-print-bar, .btn, .btn-action-report, .btn-print, .btn-back, nav, header {
+                display: none !important;
+            }
+            #wrapper {
+                display: block !important;
+            }
+            .content-wrapper {
+                padding: 0 !important;
+                background: #fff !important;
+                overflow: visible !important;
+            }
+            a[href]:after {
+                content: none !important;
+            }
+        }
     </style>
 </head>
 <body>
@@ -376,7 +402,14 @@
                         <li class="nav-item">
                             <a href="@Url.Action("Index", "Inventory")" class="nav-link @(currentController == "Inventory" && currentAction == "Index" ? "active" : "")">
                                 <i class="bi bi-boxes text-danger"></i>
-                                <span>Stock Report</span>
+                                <span>Stock Overview</span>
+                            </a>
+                        </li>
+
+                        <li class="nav-item">
+                            <a href="@Url.Action("StockReport", "Inventory")" class="nav-link @(currentController == "Inventory" && currentAction == "StockReport" ? "active" : "")">
+                                <i class="bi bi-file-earmark-spreadsheet text-success"></i>
+                                <span>Stock Report (PDF/Excel)</span>
                             </a>
                         </li>
 

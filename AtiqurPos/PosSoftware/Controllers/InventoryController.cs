@@ -162,5 +162,103 @@ namespace PosSoftware.Controllers
             var list = await q.OrderByDescending(st => st.CreatedAt).Take(200).ToListAsync();
             return View(list);
         }
+
+        [HttpGet]
+        [AuthorizePermission("InventoryList", "View")]
+        public async Task<IActionResult> StockReport(int? categoryId, DateTime? asOfDate)
+        {
+            var date = asOfDate ?? DateTime.UtcNow;
+
+            var q = _context.Products
+                .Include(p => p.Category)
+                .Include(p => p.Unit)
+                .Where(p => p.IsActive);
+
+            if (categoryId.HasValue && categoryId.Value > 0)
+            {
+                q = q.Where(p => p.CategoryId == categoryId.Value);
+            }
+
+            var products = await q.OrderBy(p => p.Category!.Name).ThenBy(p => p.Name).ToListAsync();
+            var categories = await _context.Categories.Where(c => c.IsActive).OrderBy(c => c.Name).ToListAsync();
+            var selectedCat = categories.FirstOrDefault(c => c.Id == categoryId);
+
+            var vm = new StockReportViewModel
+            {
+                AsOfDate = date,
+                SelectedCategoryId = categoryId,
+                SelectedCategoryName = selectedCat?.Name ?? "All Categories",
+                Categories = categories,
+                Items = products.Select(p => new StockReportItemDto
+                {
+                    ProductId = p.Id,
+                    SKU = p.SKU,
+                    Barcode = p.Barcode,
+                    ProductName = p.Name,
+                    GenericName = p.GenericName,
+                    CategoryName = p.Category?.Name ?? "Unassigned",
+                    UnitName = p.Unit?.ShortCode ?? "PCS",
+                    CostPrice = p.CostPrice,
+                    SellingPrice = p.SellingPrice,
+                    CurrentStock = p.CurrentStock,
+                    MinAlertStock = p.MinAlertStock
+                }).ToList()
+            };
+
+            return View(vm);
+        }
+
+        [HttpGet]
+        [AuthorizePermission("InventoryList", "View")]
+        public async Task<IActionResult> ExportStockReportExcel(int? categoryId, DateTime? asOfDate)
+        {
+            var date = asOfDate ?? DateTime.UtcNow;
+
+            var q = _context.Products
+                .Include(p => p.Category)
+                .Include(p => p.Unit)
+                .Where(p => p.IsActive);
+
+            if (categoryId.HasValue && categoryId.Value > 0)
+            {
+                q = q.Where(p => p.CategoryId == categoryId.Value);
+            }
+
+            var products = await q.OrderBy(p => p.Category!.Name).ThenBy(p => p.Name).ToListAsync();
+            var selectedCat = await _context.Categories.FindAsync(categoryId ?? 0);
+            string catName = selectedCat?.Name ?? "All_Categories";
+
+            var sb = new System.Text.StringBuilder();
+            sb.Append('\uFEFF'); // UTF-8 BOM for Excel compatibility
+
+            sb.AppendLine("ASM ENTERPRISE - Current Stock Report");
+            sb.AppendLine($"As of Date: {date:yyyy-MM-dd}, Category: {catName}");
+            sb.AppendLine();
+            sb.AppendLine("SL,SKU,Barcode,Product Name,Generic Name,Category,Unit,Cost Price (Tk),Selling Price (Tk),Current Stock,Stock Cost Value (Tk),Stock Sale Value (Tk),Status");
+
+            int sl = 1;
+            foreach (var p in products)
+            {
+                decimal costVal = p.CurrentStock * p.CostPrice;
+                decimal saleVal = p.CurrentStock * p.SellingPrice;
+                string status = p.CurrentStock <= 0 ? "Out of Stock" : (p.CurrentStock <= p.MinAlertStock ? "Low Stock" : "In Stock");
+
+                sb.AppendLine($"{sl},\"{EscapeCsv(p.SKU)}\",\"{EscapeCsv(p.Barcode)}\",\"{EscapeCsv(p.Name)}\",\"{EscapeCsv(p.GenericName ?? "")}\",\"{EscapeCsv(p.Category?.Name ?? "")}\",\"{EscapeCsv(p.Unit?.ShortCode ?? "PCS")}\",{p.CostPrice:F2},{p.SellingPrice:F2},{p.CurrentStock},{costVal:F2},{saleVal:F2},\"{status}\"");
+                sl++;
+            }
+
+            int totalQty = products.Sum(p => p.CurrentStock);
+            decimal totalCost = products.Sum(p => p.CurrentStock * p.CostPrice);
+            decimal totalSale = products.Sum(p => p.CurrentStock * p.SellingPrice);
+            sb.AppendLine();
+            sb.AppendLine($",,,,Total Items: {products.Count},,,,Total Stock:,{totalQty},{totalCost:F2},{totalSale:F2},");
+
+            var bytes = System.Text.Encoding.UTF8.GetBytes(sb.ToString());
+            string cleanCat = string.Concat(catName.Split(System.IO.Path.GetInvalidFileNameChars()));
+            string fileName = $"StockReport_{cleanCat}_{date:yyyyMMdd}.csv";
+            return File(bytes, "text/csv; charset=utf-8", fileName);
+        }
+
+        private static string EscapeCsv(string s) => (s ?? string.Empty).Replace("\"", "\"\"");
     }
 }
