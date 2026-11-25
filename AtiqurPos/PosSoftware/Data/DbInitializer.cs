@@ -38,6 +38,9 @@ namespace PosSoftware.Data
                         CREATE SYNONYM PurchaseMaster FOR dbo.Purchases;
                     IF NOT EXISTS (SELECT * FROM sys.synonyms WHERE name = 'PurchaseDetails') AND NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'PurchaseDetails') AND EXISTS (SELECT * FROM sys.tables WHERE name = 'PurchaseItems')
                         CREATE SYNONYM PurchaseDetails FOR dbo.PurchaseItems;
+
+                    IF NOT EXISTS (SELECT * FROM sys.synonyms WHERE name = 'Companies') AND NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'Companies') AND EXISTS (SELECT * FROM sys.tables WHERE name = 'Company')
+                        CREATE SYNONYM Companies FOR dbo.Company;
                 ");
             }
             catch
@@ -275,6 +278,25 @@ namespace PosSoftware.Data
                     new() { CodeId = cPo?.Id, CodeName = "PurchaseOrder", CurrentYear = DateTime.UtcNow.Year, Prefix = $"PO-{DateTime.UtcNow.Year}-", LastId = 0, LastCode = "PO-0000", LastUpdated = DateTime.UtcNow }
                 };
                 context.CodeGenerates.AddRange(codeGens);
+                context.SaveChanges();
+            }
+
+            // 6. Initialize Company if empty (ASM ENTERPRISE)
+            if (!context.Companies.Any())
+            {
+                var defaultCompany = new Company
+                {
+                    CompanyCode = "ASM",
+                    CompanyName = "ASM ENTERPRISE",
+                    Address = "Motlab Tower, Chowk Bazar, Dhaka",
+                    Phone = "+880 1700-000000",
+                    Email = "info@asmenterprise.com",
+                    Website = "www.asmenterprise.com",
+                    InvoiceFooterNote = "Thank you for your business! Goods once sold can be returned within 7 days with original invoice.",
+                    IsActive = true,
+                    CreatedAt = DateTime.UtcNow
+                };
+                context.Companies.Add(defaultCompany);
                 context.SaveChanges();
             }
         }

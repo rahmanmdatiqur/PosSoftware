@@ -638,6 +638,51 @@ BEGIN
 END
 GO
 
+-- ==============================================================================
+-- 19. Company (Store & Organization Profile)
+-- ==============================================================================
+IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'Company')
+BEGIN
+    CREATE TABLE dbo.Company (
+        Id                 INT IDENTITY(1,1) PRIMARY KEY,
+        CompanyCode        NVARCHAR(50)  NOT NULL,
+        CompanyName        NVARCHAR(200) NOT NULL,
+        Address            NVARCHAR(500) NULL,
+        Phone              NVARCHAR(50)  NULL,
+        Email              NVARCHAR(100) NULL,
+        Website            NVARCHAR(100) NULL,
+        LogoUrl            NVARCHAR(255) NULL,
+        InvoiceFooterNote  NVARCHAR(500) NULL,
+        IsActive           BIT           NOT NULL DEFAULT 1,
+        CreatedAt          DATETIME2     NOT NULL DEFAULT GETUTCDATE(),
+        UpdatedAt          DATETIME2     NULL
+    );
+    PRINT 'Company table created.';
+END
+GO
+
+IF NOT EXISTS (SELECT * FROM sys.synonyms WHERE name = 'Companies') AND NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'Companies')
+    CREATE SYNONYM Companies FOR dbo.Company;
+GO
+
+IF NOT EXISTS (SELECT 1 FROM dbo.Company)
+BEGIN
+    INSERT INTO dbo.Company (CompanyCode, CompanyName, Address, Phone, Email, Website, InvoiceFooterNote, IsActive, CreatedAt)
+    VALUES (
+        N'ASM',
+        N'ASM ENTERPRISE',
+        N'Motlab Tower, Chowk Bazar, Dhaka',
+        N'+880 1700-000000',
+        N'info@asmenterprise.com',
+        N'www.asmenterprise.com',
+        N'Thank you for your business! Goods once sold can be returned within 7 days with original invoice.',
+        1,
+        GETUTCDATE()
+    );
+    PRINT 'Seed data for Company inserted.';
+END
+GO
+
 PRINT '==============================================================================';
 PRINT 'PosInventoryDb Schema & Table Script verified and ready for production use.';
 PRINT '==============================================================================';

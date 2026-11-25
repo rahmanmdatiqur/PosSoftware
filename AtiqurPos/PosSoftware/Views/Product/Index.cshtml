@@ -10,9 +10,6 @@
             <span class="text-muted small">Manage distribution items, images, brands/specifications, barcodes, and rates</span>
         </div>
         <div class="d-flex align-items-center gap-2">
-            <a href="@Url.Action("CategoryWiseReport", "Product", new { categoryId = ViewBag.SelectedCategoryId })" target="_blank" class="btn btn-outline-primary d-inline-flex align-items-center gap-1 shadow-sm">
-                <i class="bi bi-printer-fill"></i> Category Wise Product Report
-            </a>
             <a href="@Url.Action("Create", "Product")" class="btn btn-theme-new">
                 <i class="bi bi-plus-lg me-1"></i> Add Product
             </a>
@@ -32,7 +29,7 @@
             </div>
             <div class="col-md-3 d-flex gap-2">
                 <button type="submit" class="btn btn-sm btn-primary flex-fill"><i class="bi bi-funnel"></i> Filter</button>
-                <a href="@Url.Action("CategoryWiseReport", "Product", new { categoryId = ViewBag.SelectedCategoryId })" target="_blank" class="btn btn-sm btn-outline-secondary d-flex align-items-center gap-1" title="Print Category Report">
+                <a href="@Url.Action("CategoryWiseReport", "Product", new { categoryId = ViewBag.SelectedCategoryId })" onclick="openCategoryReport(event)" class="btn btn-sm btn-outline-primary d-flex align-items-center gap-1" title="Category Wise Product Report">
                     <i class="bi bi-printer"></i> Report
                 </a>
             </div>
@@ -99,3 +96,22 @@
         <partial name="_GridPager" />
     </div>
 </div>
+
+@section Scripts {
+    <script>
+        function openCategoryReport(e) {
+            e.preventDefault();
+            const catSelect = document.querySelector('select[name="categoryId"]');
+            const searchInput = document.querySelector('input[name="search"]');
+            const catId = catSelect ? catSelect.value : '';
+            const search = searchInput ? searchInput.value.trim() : '';
+            let url = '@Url.Action("CategoryWiseReport", "Product")';
+            const params = new URLSearchParams();
+            if (catId) params.append('categoryId', catId);
+            if (search) params.append('search', search);
+            const qs = params.toString();
+            if (qs) url += '?' + qs;
+            window.open(url, '_blank');
+        }
+    </script>
+}

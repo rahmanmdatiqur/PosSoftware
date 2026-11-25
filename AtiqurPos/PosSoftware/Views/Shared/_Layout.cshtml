@@ -343,11 +343,13 @@
             <nav id="sidebar-wrapper" class="d-flex flex-column">
                 <!-- Brand / Logo matching ASM Enterprise -->
                 <div class="sidebar-brand text-center py-3">
-                    <div style="width: 48px; height: 48px; margin: 0 auto; background: linear-gradient(135deg, #0284c7, #0369a1); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 1.3rem; color: #fff; box-shadow: 0 4px 12px rgba(2,132,199,0.4); border: 2px solid rgba(255,255,255,0.2);">
-                        ASM
-                    </div>
-                    <div class="sidebar-brand-title mt-2" style="font-weight: 800; font-size: 1rem; letter-spacing: 0.5px;">ASM ENTERPRISE</div>
-                    <div class="sidebar-brand-sub" style="font-size: 0.72rem; opacity: 0.85;">Motlab Tower, Chowk Bazar, Dhaka</div>
+                    <a href="@Url.Action("Index", "Company")" class="text-decoration-none" title="Manage Company Profile">
+                        <div style="width: 48px; height: 48px; margin: 0 auto; background: linear-gradient(135deg, #0284c7, #0369a1); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 1.3rem; color: #fff; box-shadow: 0 4px 12px rgba(2,132,199,0.4); border: 2px solid rgba(255,255,255,0.2);">
+                            ASM
+                        </div>
+                        <div class="sidebar-brand-title mt-2 text-white" style="font-weight: 800; font-size: 1rem; letter-spacing: 0.5px;">ASM ENTERPRISE</div>
+                        <div class="sidebar-brand-sub" style="font-size: 0.72rem; opacity: 0.85; color: rgba(255,255,255,0.8);">Motlab Tower, Chowk Bazar, Dhaka</div>
+                    </a>
                 </div>
 
                 <!-- Navigation List -->
@@ -375,13 +377,6 @@
                             <a href="@Url.Action("Create", "Sales")" class="nav-link @(currentController == "Sales" && currentAction == "Create" ? "active" : "")">
                                 <i class="bi bi-cart-plus text-success"></i>
                                 <span>Sale Entry</span>
-                            </a>
-                        </li>
-
-                        <li class="nav-item">
-                            <a href="@Url.Action("OrderForm", "Sales")" class="nav-link @(currentController == "Sales" && currentAction == "OrderForm" ? "active" : "")">
-                                <i class="bi bi-file-earmark-spreadsheet text-info"></i>
-                                <span>Order Form</span>
                             </a>
                         </li>
 
@@ -448,6 +443,13 @@
                             <a href="@Url.Action("Index", "Customer")" class="nav-link @(currentController == "Customer" ? "active" : "")">
                                 <i class="bi bi-people text-primary"></i>
                                 <span>Customers & Retailers</span>
+                            </a>
+                        </li>
+
+                        <li class="nav-item">
+                            <a href="@Url.Action("Index", "Company")" class="nav-link @(currentController == "Company" ? "active" : "")">
+                                <i class="bi bi-building text-warning"></i>
+                                <span>Company Profile</span>
                             </a>
                         </li>
 

@@ -38,6 +38,9 @@ namespace PosSoftware.Data
         public DbSet<Code> Codes => Set<Code>();
         public DbSet<CodeGenerate> CodeGenerates => Set<CodeGenerate>();
 
+        // Company / Store Profile
+        public DbSet<Company> Companies => Set<Company>();
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
@@ -48,6 +51,7 @@ namespace PosSoftware.Data
             modelBuilder.Entity<AppModulePage>().ToTable("ModulePages");
             modelBuilder.Entity<RolePermission>().ToTable("RolePermissions");
             modelBuilder.Entity<Category>().ToTable("Categories");
+            modelBuilder.Entity<Company>().ToTable("Company");
             modelBuilder.Entity<Unit>().ToTable("Units");
             modelBuilder.Entity<Supplier>().ToTable("Suppliers");
             modelBuilder.Entity<Product>().ToTable("Products");

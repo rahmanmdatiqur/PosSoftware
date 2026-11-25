@@ -1,0 +1,299 @@
+@model List<PosSoftware.Models.Entities.Company>
+@{
+    ViewData["Title"] = "Company Information";
+    var primaryCompany = Model.FirstOrDefault(c => c.IsActive) ?? Model.FirstOrDefault() ?? new PosSoftware.Models.Entities.Company();
+}
+
+<div class="container-fluid p-0">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h4 class="fw-bold text-dark m-0">
+                <i class="bi bi-building text-primary me-2"></i>Company & Store Profile
+            </h4>
+            <span class="text-muted small">Manage your business identity, store branding, invoices header/footer, and contact details</span>
+        </div>
+        <div class="d-flex gap-2">
+            <button type="button" class="btn btn-primary shadow-sm" data-bs-toggle="modal" data-bs-target="#createCompanyModal">
+                <i class="bi bi-plus-lg me-1"></i> Add Company
+            </button>
+        </div>
+    </div>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show shadow-sm border-0 d-flex align-items-center gap-2 mb-3" role="alert">
+            <i class="bi bi-check-circle-fill fs-5 text-success"></i>
+            <div>@TempData["SuccessMessage"]</div>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show shadow-sm border-0 d-flex align-items-center gap-2 mb-3" role="alert">
+            <i class="bi bi-exclamation-triangle-fill fs-5 text-danger"></i>
+            <div>@TempData["ErrorMessage"]</div>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <!-- Primary Active Company Card -->
+    <div class="card border-0 shadow-sm rounded-3 mb-4 overflow-hidden" style="background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%); border-left: 5px solid #0284c7 !important;">
+        <div class="card-body p-4">
+            <div class="row align-items-center">
+                <div class="col-auto">
+                    <div style="width: 80px; height: 80px; background: linear-gradient(135deg, #0284c7, #0369a1); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 2rem; color: #fff; box-shadow: 0 6px 18px rgba(2,132,199,0.35); border: 3px solid #fff;">
+                        @(string.IsNullOrEmpty(primaryCompany.CompanyCode) ? "ASM" : primaryCompany.CompanyCode)
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="d-flex align-items-center gap-2 mb-1">
+                        <h3 class="fw-bold text-dark m-0">@primaryCompany.CompanyName</h3>
+                        <span class="badge @(primaryCompany.IsActive ? "bg-success" : "bg-secondary")">
+                            @(primaryCompany.IsActive ? "Active Store" : "Inactive")
+                        </span>
+                        <span class="badge bg-primary text-white">Code: @primaryCompany.CompanyCode</span>
+                    </div>
+                    <div class="text-secondary mb-2" style="font-size: 0.95rem;">
+                        <i class="bi bi-geo-alt-fill text-danger me-1"></i>
+                        <span>@(string.IsNullOrWhiteSpace(primaryCompany.Address) ? "Motlab Tower, Chowk Bazar, Dhaka" : primaryCompany.Address)</span>
+                    </div>
+                    <div class="d-flex flex-wrap gap-4 text-muted small">
+                        @if (!string.IsNullOrWhiteSpace(primaryCompany.Phone))
+                        {
+                            <div><i class="bi bi-telephone-fill text-primary me-1"></i> @primaryCompany.Phone</div>
+                        }
+                        @if (!string.IsNullOrWhiteSpace(primaryCompany.Email))
+                        {
+                            <div><i class="bi bi-envelope-fill text-info me-1"></i> @primaryCompany.Email</div>
+                        }
+                        @if (!string.IsNullOrWhiteSpace(primaryCompany.Website))
+                        {
+                            <div><i class="bi bi-globe2 text-success me-1"></i> @primaryCompany.Website</div>
+                        }
+                    </div>
+                    @if (!string.IsNullOrWhiteSpace(primaryCompany.InvoiceFooterNote))
+                    {
+                        <div class="mt-2 p-2 rounded bg-light border text-muted small">
+                            <i class="bi bi-chat-quote-fill text-secondary me-1"></i>
+                            <strong>Invoice Note:</strong> @primaryCompany.InvoiceFooterNote
+                        </div>
+                    }
+                </div>
+                <div class="col-auto">
+                    <button type="button" class="btn btn-outline-primary btn-sm px-3 py-2 fw-semibold shadow-sm" onclick="openEditModal(@primaryCompany.Id)">
+                        <i class="bi bi-pencil-square me-1"></i> Update Company
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Company Records Table -->
+    <div class="card border-0 shadow-sm rounded-3 bg-white">
+        <div class="card-header bg-white py-3 border-0 d-flex justify-content-between align-items-center">
+            <h6 class="fw-bold m-0 text-dark">
+                <i class="bi bi-list-ul text-primary me-1"></i> All Registered Companies
+            </h6>
+            <span class="badge bg-light text-dark border">Total: @Model.Count</span>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th style="width: 80px;">Code</th>
+                        <th>Company Name</th>
+                        <th>Address</th>
+                        <th>Phone</th>
+                        <th>Email</th>
+                        <th style="width: 90px;">Status</th>
+                        <th style="width: 100px;" class="text-center">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var c in Model)
+                    {
+                        <tr>
+                            <td>
+                                <span class="badge bg-primary px-2 py-1">@c.CompanyCode</span>
+                            </td>
+                            <td>
+                                <div class="fw-semibold text-dark">@c.CompanyName</div>
+                                @if (!string.IsNullOrWhiteSpace(c.Website))
+                                {
+                                    <div class="small text-muted">@c.Website</div>
+                                }
+                            </td>
+                            <td class="small text-secondary">@c.Address</td>
+                            <td class="small">@(c.Phone ?? "-")</td>
+                            <td class="small">@(c.Email ?? "-")</td>
+                            <td>
+                                <span class="badge @(c.IsActive ? "bg-success" : "bg-secondary")">
+                                    @(c.IsActive ? "Active" : "Inactive")
+                                </span>
+                            </td>
+                            <td class="text-center">
+                                <button type="button" class="btn btn-sm btn-outline-primary p-1 px-2" onclick="openEditModal(@c.Id)" title="Edit Company Details">
+                                    <i class="bi bi-pencil-square"></i> Edit
+                                </button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- ========================================== -->
+<!-- CREATE COMPANY MODAL                       -->
+<!-- ========================================== -->
+<div class="modal fade" id="createCompanyModal" tabindex="-1" aria-labelledby="createCompanyModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title fw-bold" id="createCompanyModalLabel">
+                    <i class="bi bi-building-add me-2"></i>Add New Company
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="post" action="@Url.Action("Create", "Company")">
+                @Html.AntiForgeryToken()
+                <div class="modal-body p-4">
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold small">Company Code / Short Name <span class="text-danger">*</span></label>
+                            <input type="text" name="CompanyCode" class="form-control" placeholder="e.g. ASM" required maxlength="50" />
+                        </div>
+                        <div class="col-md-8">
+                            <label class="form-label fw-semibold small">Company Full Name <span class="text-danger">*</span></label>
+                            <input type="text" name="CompanyName" class="form-control" placeholder="e.g. ASM ENTERPRISE" required maxlength="200" />
+                        </div>
+                        <div class="col-md-12">
+                            <label class="form-label fw-semibold small">Office Address</label>
+                            <textarea name="Address" class="form-control" rows="2" placeholder="e.g. Motlab Tower, Chowk Bazar, Dhaka" maxlength="500"></textarea>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold small">Phone / Mobile</label>
+                            <input type="text" name="Phone" class="form-control" placeholder="e.g. +880 1700-000000" maxlength="50" />
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold small">Email Address</label>
+                            <input type="email" name="Email" class="form-control" placeholder="info@company.com" maxlength="100" />
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold small">Website</label>
+                            <input type="text" name="Website" class="form-control" placeholder="www.company.com" maxlength="100" />
+                        </div>
+                        <div class="col-md-12">
+                            <label class="form-label fw-semibold small">Invoice / Receipt Footer Note</label>
+                            <textarea name="InvoiceFooterNote" class="form-control" rows="2" placeholder="Note to show at the bottom of printed invoices" maxlength="500"></textarea>
+                        </div>
+                        <div class="col-md-12">
+                            <div class="form-check form-switch mt-2">
+                                <input class="form-check-input" type="checkbox" name="IsActive" value="true" id="createIsActive" checked />
+                                <label class="form-check-label fw-semibold" for="createIsActive">Active Store Profile</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary btn-sm px-3 fw-semibold">Save Company</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- ========================================== -->
+<!-- EDIT COMPANY MODAL                         -->
+<!-- ========================================== -->
+<div class="modal fade" id="editCompanyModal" tabindex="-1" aria-labelledby="editCompanyModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-dark text-white">
+                <h5 class="modal-title fw-bold" id="editCompanyModalLabel">
+                    <i class="bi bi-pencil-square text-primary me-2"></i>Edit Company Information
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="post" action="@Url.Action("Edit", "Company")">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="Id" id="edit_Id" />
+                <div class="modal-body p-4">
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold small">Company Code / Short Name <span class="text-danger">*</span></label>
+                            <input type="text" name="CompanyCode" id="edit_CompanyCode" class="form-control" required maxlength="50" />
+                        </div>
+                        <div class="col-md-8">
+                            <label class="form-label fw-semibold small">Company Full Name <span class="text-danger">*</span></label>
+                            <input type="text" name="CompanyName" id="edit_CompanyName" class="form-control" required maxlength="200" />
+                        </div>
+                        <div class="col-md-12">
+                            <label class="form-label fw-semibold small">Office Address</label>
+                            <textarea name="Address" id="edit_Address" class="form-control" rows="2" maxlength="500"></textarea>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold small">Phone / Mobile</label>
+                            <input type="text" name="Phone" id="edit_Phone" class="form-control" maxlength="50" />
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold small">Email Address</label>
+                            <input type="email" name="Email" id="edit_Email" class="form-control" maxlength="100" />
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold small">Website</label>
+                            <input type="text" name="Website" id="edit_Website" class="form-control" maxlength="100" />
+                        </div>
+                        <div class="col-md-12">
+                            <label class="form-label fw-semibold small">Invoice / Receipt Footer Note</label>
+                            <textarea name="InvoiceFooterNote" id="edit_InvoiceFooterNote" class="form-control" rows="2" maxlength="500"></textarea>
+                        </div>
+                        <div class="col-md-12">
+                            <div class="form-check form-switch mt-2">
+                                <input class="form-check-input" type="checkbox" name="IsActive" value="true" id="edit_IsActive" />
+                                <label class="form-check-label fw-semibold" for="edit_IsActive">Active Store Profile</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary btn-sm px-3 fw-semibold">Update Company</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function openEditModal(companyId) {
+            fetch('@Url.Action("GetCompany", "Company")?id=' + companyId)
+                .then(res => {
+                    if (!res.ok) throw new Error('Company not found');
+                    return res.json();
+                })
+                .then(data => {
+                    document.getElementById('edit_Id').value = data.id;
+                    document.getElementById('edit_CompanyCode').value = data.companyCode || '';
+                    document.getElementById('edit_CompanyName').value = data.companyName || '';
+                    document.getElementById('edit_Address').value = data.address || '';
+                    document.getElementById('edit_Phone').value = data.phone || '';
+                    document.getElementById('edit_Email').value = data.email || '';
+                    document.getElementById('edit_Website').value = data.website || '';
+                    document.getElementById('edit_InvoiceFooterNote').value = data.invoiceFooterNote || '';
+                    document.getElementById('edit_IsActive').checked = !!data.isActive;
+
+                    var modal = new bootstrap.Modal(document.getElementById('editCompanyModal'));
+                    modal.show();
+                })
+                .catch(err => {
+                    alert('Error loading company details: ' + err.message);
+                });
+        }
+    </script>
+}
