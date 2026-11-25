@@ -1,4 +1,6 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Storage;
 using PosSoftware.Models.Entities;
 using PosSoftware.Services;
 
@@ -8,7 +10,34 @@ namespace PosSoftware.Data
     {
         public static void Initialize(ApplicationDbContext context)
         {
-            context.Database.EnsureCreated();
+            // Auto-create database and tables if not exist on target machine
+            try
+            {
+                var databaseCreator = context.Database.GetService<IDatabaseCreator>() as RelationalDatabaseCreator;
+                if (databaseCreator != null)
+                {
+                    if (!databaseCreator.Exists())
+                    {
+                        databaseCreator.Create();
+                    }
+                    if (!databaseCreator.HasTables())
+                    {
+                        databaseCreator.CreateTables();
+                    }
+                }
+                else
+                {
+                    context.Database.EnsureCreated();
+                }
+            }
+            catch
+            {
+                try
+                {
+                    context.Database.EnsureCreated();
+                }
+                catch { }
+            }
 
             // Auto-create synonyms so both Users/AppUsers, Roles/AppRoles, ModulePages/AppModulePages work seamlessly
             try
