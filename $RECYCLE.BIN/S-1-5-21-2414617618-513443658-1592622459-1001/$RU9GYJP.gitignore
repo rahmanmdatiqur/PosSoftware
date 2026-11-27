@@ -1,0 +1,31 @@
+## Visual Studio
+.vs/
+*.vsidx
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+*.userprefs
+
+## Build Results
+bin/
+obj/
+Debug/
+Release/
+x64/
+x86/
+
+## System & OS
+$RECYCLE.BIN/
+System Volume Information/
+*.tmp
+*.log
+*.winmd
+Thumbs.db
+desktop.ini
+
+## Other Drives/Folders on E:
+/EuropeDocuments/
+/SqlData/
+/NugetPackages/
+/Temp/
