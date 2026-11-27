@@ -1,6 +1,8 @@
 @model PosSoftware.Models.ViewModels.StockReportViewModel
+@inject PosSoftware.Services.ICompanyService CompanyService
 @{
     Layout = null;
+    var company = await CompanyService.GetActiveCompanyAsync();
     var filename = $"StockReport_{Model.SelectedCategoryName.Replace(" ", "_")}_{Model.AsOfDate:yyyyMMdd}";
 }
 <!DOCTYPE html>
@@ -43,6 +45,7 @@
             margin: 0 auto;
             background: #fff;
             padding: 12mm 15mm;
+            border: 1.5px solid #000;
             box-shadow: 0 4px 12px rgba(0,0,0,0.1);
             box-sizing: border-box;
         }
@@ -142,19 +145,29 @@
                 size: A4 landscape;
                 margin: 0mm;
             }
-            html, body {
+            html {
                 background: #fff !important;
                 margin: 0mm !important;
                 padding: 0mm !important;
+            }
+            body {
+                background: #fff !important;
+                margin: 0mm !important;
+                padding: 6mm !important;
+                box-sizing: border-box !important;
             }
             .no-print-bar {
                 display: none !important;
             }
             .report-paper {
                 box-shadow: none !important;
+                border: 1.5px solid #000 !important;
                 margin: 0 auto !important;
-                padding: 8mm 10mm !important;
+                padding: 7mm 9mm !important;
+                min-height: 194mm !important;
                 max-width: 100% !important;
+                width: 100% !important;
+                box-sizing: border-box !important;
             }
             .stock-table th {
                 background-color: #0f172a !important;
@@ -224,16 +237,27 @@
         <div class="report-header">
             <div>
                 <div class="d-flex align-items-center gap-2">
-                    <div style="width: 38px; height: 38px; background: #0284c7; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 900; font-size: 1.1rem;">
-                        ASM
+                    <div style="width: 38px; height: 38px; background: #0284c7; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 900; font-size: 1rem;">
+                        @company.CompanyCode
                     </div>
                     <div>
-                        <h2 class="company-title">ASM ENTERPRISE</h2>
-                        <div class="company-sub">Wholesale & Distribution Management System</div>
+                        <h2 class="company-title">@company.CompanyName</h2>
+                        @if (!string.IsNullOrWhiteSpace(company.Website))
+                        {
+                            <div class="company-sub">@company.Website</div>
+                        }
                     </div>
                 </div>
                 <div style="font-size: 7.5pt; color: #475569; margin-top: 4px;">
-                    Motlab Tower, Chowk Bazar, Dhaka-1211 | Phone: 01711-000000
+                    @company.Address
+                    @if (!string.IsNullOrWhiteSpace(company.Phone))
+                    {
+                        <span> | Phone: @company.Phone</span>
+                    }
+                    @if (!string.IsNullOrWhiteSpace(company.Email))
+                    {
+                        <span> | Email: @company.Email</span>
+                    }
                 </div>
             </div>
 
@@ -337,6 +361,13 @@
             <div class="sig-box">Prepared By</div>
             <div class="sig-box">Store In-Charge</div>
             <div class="sig-box">Authorized Signature</div>
+        </div>
+
+        <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #cbd5e1; margin-top: 14px; padding-top: 6px; font-size: 8pt; color: #334155;">
+            <div>Printed Date : @DateTime.Now.ToString("MM/dd/yyyy, h:mm:ss tt")</div>
+            <div style="text-align: right;">
+                <b>@company.CompanyName</b> | Imported By: Sordar Enterprise
+            </div>
         </div>
     </div>
 

@@ -244,6 +244,7 @@ namespace PosSoftware.Controllers
             prod.SupplierId = model.SupplierId;
             prod.CostPrice = model.CostPrice;
             prod.SellingPrice = model.SellingPrice;
+            prod.MRP = model.MRP;
             prod.MinAlertStock = model.MinAlertStock;
             prod.IsActive = model.IsActive;
 

@@ -17,12 +17,14 @@ namespace PosSoftware.Controllers
         private readonly ApplicationDbContext _context;
         private readonly IInventoryService _inventoryService;
         private readonly INumberSequenceService _sequenceService;
+        private readonly ICompanyService _companyService;
 
-        public PosController(ApplicationDbContext context, IInventoryService inventoryService, INumberSequenceService sequenceService)
+        public PosController(ApplicationDbContext context, IInventoryService inventoryService, INumberSequenceService sequenceService, ICompanyService companyService)
         {
             _context = context;
             _inventoryService = inventoryService;
             _sequenceService = sequenceService;
+            _companyService = companyService;
         }
 
         [HttpGet]
@@ -278,8 +280,12 @@ namespace PosSoftware.Controllers
                 return NotFound();
             }
 
+            var company = await _companyService.GetActiveCompanyAsync();
             var model = new ReceiptViewModel
             {
+                StoreName = company.CompanyName,
+                StoreAddress = company.Address ?? "",
+                StorePhone = company.Phone ?? "",
                 Sale = sale,
                 Items = sale.SaleItems.ToList()
             };

@@ -1,10 +1,40 @@
 @model List<PosSoftware.Models.Entities.Sale>
+@inject PosSoftware.Services.ICompanyService CompanyService
 @{
     ViewData["Title"] = "Sales Reports";
+    var company = await CompanyService.GetActiveCompanyAsync();
 }
 
-<div class="container-fluid p-0">
-    <div class="d-flex justify-content-between align-items-center mb-3">
+<style>
+    .print-company-header { display: none; }
+    @@media print {
+        @@page { size: A4; margin: 0mm; }
+        html { padding: 0 !important; margin: 0 !important; background: #fff !important; }
+        body { padding: 6mm !important; margin: 0 !important; background: #fff !important; }
+        .no-print, .sidebar, #sidebar-wrapper, .top-navbar, header, nav { display: none !important; }
+        .report-print-frame {
+            border: 1.5px solid #000 !important;
+            padding: 8mm 10mm !important;
+            min-height: 280mm !important;
+            box-sizing: border-box !important;
+        }
+        .print-company-header {
+            display: block !important;
+            text-align: center;
+            border-bottom: 2px solid #000;
+            padding-bottom: 8px;
+            margin-bottom: 12px;
+        }
+    }
+</style>
+
+<div class="container-fluid p-0 report-print-frame">
+    <div class="print-company-header">
+        <h3 class="fw-bold m-0">@company.CompanyName</h3>
+        <div class="small">@company.Address @(string.IsNullOrWhiteSpace(company.Phone) ? "" : $"| Phone: {company.Phone}")</div>
+        <div class="fw-bold mt-1">Sales Summary Report</div>
+    </div>
+    <div class="d-flex justify-content-between align-items-center mb-3 no-print">
         <div>
             <h4 class="fw-bold text-dark m-0">Business Intelligence & Reports</h4>
             <span class="text-muted small">Sales revenue analytics and tender distribution</span>
@@ -82,6 +112,13 @@
                 <span class="text-muted small text-uppercase fw-bold">Mobile Banking Sales</span>
                 <h4 class="fw-bold text-warning mt-1 mb-0">$@ViewBag.MobileTotal.ToString("N2")</h4>
             </div>
+        </div>
+    </div>
+
+    <div class="d-flex justify-content-between align-items-center border-top pt-2 mt-4 small text-muted">
+        <div>Printed Date : @DateTime.Now.ToString("MM/dd/yyyy, h:mm:ss tt")</div>
+        <div class="text-end">
+            <b>@company.CompanyName</b> | Imported By: Sordar Enterprise
         </div>
     </div>
 </div>

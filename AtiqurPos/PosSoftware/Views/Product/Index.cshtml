@@ -49,6 +49,7 @@
                         <th>Category</th>
                         <th class="text-end">Cost</th>
                         <th class="text-end">Selling Price</th>
+                        <th class="text-end">MRP</th>
                         <th class="text-center">Stock</th>
                         <th>Status</th>
                         <th class="text-center">Action</th>
@@ -73,6 +74,7 @@
                             <td>@(p.Category?.Name ?? "-")</td>
                             <td class="text-end text-muted">৳ @p.CostPrice.ToString("N2")</td>
                             <td class="text-end fw-bold text-primary">৳ @p.SellingPrice.ToString("N2")</td>
+                            <td class="text-end fw-semibold text-success">৳ @p.MRP.ToString("N2")</td>
                             <td class="text-center">
                                 <span class="badge @(p.CurrentStock <= 0 ? "bg-danger" : p.CurrentStock <= p.MinAlertStock ? "bg-warning text-dark" : "bg-success")">
                                     @p.CurrentStock @(p.Unit?.ShortCode ?? "pcs")

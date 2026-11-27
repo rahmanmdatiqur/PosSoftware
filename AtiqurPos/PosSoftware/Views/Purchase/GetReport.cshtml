@@ -1,6 +1,8 @@
 @model PosSoftware.Models.Entities.Purchase
+@inject PosSoftware.Services.ICompanyService CompanyService
 @{
     Layout = null;
+    var company = await CompanyService.GetActiveCompanyAsync();
     var supplierCode = Model.Supplier != null ? $"SUP-{(Model.Supplier.Id + 15):D6}" : "SUP-000016";
 }
 <!DOCTYPE html>
@@ -24,12 +26,15 @@
         .invoice-paper {
             background: #fff;
             max-width: 210mm;
-            min-height: 270mm;
+            min-height: 281mm;
             margin: 0 auto;
-            padding: 20mm;
+            padding: 12mm 14mm;
+            border: 1.5px solid #000;
             box-shadow: 0 4px 12px rgba(0,0,0,0.1);
             position: relative;
             box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
         }
         .no-print {
             max-width: 210mm;
@@ -205,17 +210,31 @@
                 size: A4;
                 margin: 0mm;
             }
-            html, body {
+            html {
                 background: #fff !important;
                 margin: 0mm !important;
                 padding: 0mm !important;
             }
+            body {
+                background: #fff !important;
+                margin: 0mm !important;
+                padding: 6mm !important;
+                box-sizing: border-box !important;
+            }
             .invoice-paper {
                 box-shadow: none !important;
-                padding: 12mm 15mm !important;
+                border: 1.5px solid #000 !important;
+                padding: 8mm 10mm !important;
                 margin: 0 auto !important;
-                min-height: auto !important;
+                height: 280mm !important;
+                min-height: 280mm !important;
+                max-height: 280mm !important;
                 max-width: 100% !important;
+                width: 100% !important;
+                display: flex !important;
+                flex-direction: column !important;
+                box-sizing: border-box !important;
+                overflow: hidden !important;
             }
             .no-print {
                 display: none !important;
@@ -245,15 +264,24 @@
         <!-- Top Header matching Screenshot 10 -->
         <div class="report-header">
             <div class="company-info">
-                <div style="width: 50px; height: 50px; background: #004085; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 900; font-size: 1.3rem; flex-shrink: 0; box-shadow: 0 2px 6px rgba(0,64,133,0.3);">
-                    ASM
+                <div style="width: 50px; height: 50px; background: #004085; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 900; font-size: 1.2rem; flex-shrink: 0; box-shadow: 0 2px 6px rgba(0,64,133,0.3);">
+                    @company.CompanyCode
                 </div>
                 <div>
-                    <div class="company-title">ASM ENTERPRISE</div>
-                    <div class="company-sub">WHOLESALE & RETAIL SUPPLIER</div>
+                    <div class="company-title">@company.CompanyName</div>
                     <div class="company-address">
-                        Motlab Tower, Chowk Bazar, Dhaka-1211.<br />
-                        Phone / Mobile: Motlab Tower, Chowk Bazar, Dhaka
+                        @if (!string.IsNullOrWhiteSpace(company.Address))
+                        {
+                            <span>@company.Address</span><br />
+                        }
+                        @if (!string.IsNullOrWhiteSpace(company.Phone))
+                        {
+                            <span>Phone: @company.Phone</span>
+                        }
+                        @if (!string.IsNullOrWhiteSpace(company.Email))
+                        {
+                            <span>@(string.IsNullOrWhiteSpace(company.Phone) ? "" : " | ")Email: @company.Email</span>
+                        }
                     </div>
                 </div>
             </div>
@@ -327,27 +355,34 @@
             Amount in words : @ViewBag.AmountInWords
         </div>
 
-        <!-- Three Signature Lines matching Screenshot 10 -->
-        <div class="signatures-row">
-            <div class="sig-block">Order by</div>
-            <div class="sig-block">Purchase Officer</div>
-            <div class="sig-block">Delivered by</div>
-            <div class="sig-block">Received by</div>
-        </div>
-
-        <!-- Footer matching ASM Enterprise -->
-        <div class="report-footer">
-            <div>
-                Printed Date : @DateTime.Now.ToString("MM/dd/yyyy, h:mm:ss tt")
+        <div style="margin-top: auto;">
+            <!-- Signature Lines -->
+            <div class="signatures-row">
+                <div class="sig-block">Order by</div>
+                <div class="sig-block">Purchase Officer</div>
+                <div class="sig-block">Delivered by</div>
+                <div class="sig-block">Received by</div>
             </div>
 
-            <div style="text-align: right;">
-                Print By : @(Model.CreatedByUser?.Username ?? "Admin")<br />
-                <b>ASM ENTERPRISE</b> - Dhaka
+            <!-- Footer from Company Table -->
+            <div class="report-footer">
+                <div>
+                    Printed Date : @DateTime.Now.ToString("MM/dd/yyyy, h:mm:ss tt")
+                </div>
+
+                <div style="text-align: right;">
+                    Print By : @(Model.CreatedByUser?.Username ?? "Admin")<br />
+                    <b>@company.CompanyName</b><br />
+                    <span style="font-size: 7.5pt; font-weight: 600;">Imported By: Sordar Enterprise</span>
+                </div>
             </div>
-        </div>
-        <div style="text-align: center; font-size: 7pt; color: #004085; margin-top: 6px;">
-            Motlab Tower, Chowk Bazar, Dhaka-1211.
+            <div style="text-align: center; font-size: 7pt; color: #004085; margin-top: 6px;">
+                @(!string.IsNullOrWhiteSpace(company.InvoiceFooterNote) ? company.InvoiceFooterNote : company.Address)
+                @if (!string.IsNullOrWhiteSpace(company.Website))
+                {
+                    <span> | @company.Website</span>
+                }
+            </div>
         </div>
     </div>
 </body>

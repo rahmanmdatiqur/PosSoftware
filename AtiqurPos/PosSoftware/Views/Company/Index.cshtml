@@ -255,6 +255,7 @@
                         <div class="col-md-12">
                             <div class="form-check form-switch mt-2">
                                 <input class="form-check-input" type="checkbox" name="IsActive" value="true" id="edit_IsActive" />
+                                <input type="hidden" name="IsActive" value="false" />
                                 <label class="form-check-label fw-semibold" for="edit_IsActive">Active Store Profile</label>
                             </div>
                         </div>
@@ -278,15 +279,15 @@
                     return res.json();
                 })
                 .then(data => {
-                    document.getElementById('edit_Id').value = data.id;
-                    document.getElementById('edit_CompanyCode').value = data.companyCode || '';
-                    document.getElementById('edit_CompanyName').value = data.companyName || '';
-                    document.getElementById('edit_Address').value = data.address || '';
-                    document.getElementById('edit_Phone').value = data.phone || '';
-                    document.getElementById('edit_Email').value = data.email || '';
-                    document.getElementById('edit_Website').value = data.website || '';
-                    document.getElementById('edit_InvoiceFooterNote').value = data.invoiceFooterNote || '';
-                    document.getElementById('edit_IsActive').checked = !!data.isActive;
+                    document.getElementById('edit_Id').value = data.Id ?? data.id ?? '';
+                    document.getElementById('edit_CompanyCode').value = data.CompanyCode ?? data.companyCode ?? '';
+                    document.getElementById('edit_CompanyName').value = data.CompanyName ?? data.companyName ?? '';
+                    document.getElementById('edit_Address').value = data.Address ?? data.address ?? '';
+                    document.getElementById('edit_Phone').value = data.Phone ?? data.phone ?? '';
+                    document.getElementById('edit_Email').value = data.Email ?? data.email ?? '';
+                    document.getElementById('edit_Website').value = data.Website ?? data.website ?? '';
+                    document.getElementById('edit_InvoiceFooterNote').value = data.InvoiceFooterNote ?? data.invoiceFooterNote ?? '';
+                    document.getElementById('edit_IsActive').checked = !!(data.IsActive ?? data.isActive);
 
                     var modal = new bootstrap.Modal(document.getElementById('editCompanyModal'));
                     modal.show();

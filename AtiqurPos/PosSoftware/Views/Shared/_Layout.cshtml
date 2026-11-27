@@ -1,5 +1,7 @@
 @inject PosSoftware.Services.IPermissionService PermissionService
+@inject PosSoftware.Services.ICompanyService CompanyService
 @{
+    var activeCompany = await CompanyService.GetActiveCompanyAsync();
     bool isAuthenticated = User.Identity?.IsAuthenticated == true;
     var currentRole = User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value ?? "Guest";
     var fullName = User.FindFirst(System.Security.Claims.ClaimTypes.GivenName)?.Value ?? User.Identity?.Name ?? "Admin User";
@@ -97,26 +99,43 @@
         }
         .sidebar-brand {
             background-color: #ffffff;
-            padding: 12px 15px;
+            padding: 12px 10px;
+            margin: 8px 8px 6px 8px;
+            border-radius: 10px;
             text-align: center;
-            border-bottom: 1px solid #e2e8f0;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.12);
         }
         .sidebar-brand img, .sidebar-brand svg {
-            max-height: 52px;
+            max-height: 58px;
         }
         .sidebar-brand-title {
-            color: #0369a1;
-            font-size: 0.85rem;
+            color: #1b3b6f;
+            font-size: 0.95rem;
             font-weight: 800;
             letter-spacing: 0.5px;
             line-height: 1.2;
-            margin-top: 4px;
+            margin-top: 6px;
+            text-transform: uppercase;
         }
         .sidebar-brand-sub {
-            color: #64748b;
-            font-size: 0.65rem;
+            color: #107c41;
+            font-size: 0.62rem;
+            font-weight: 700;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
+            letter-spacing: 0.4px;
+            margin-top: 3px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+        }
+        .sidebar-brand-sub::before,
+        .sidebar-brand-sub::after {
+            content: "";
+            flex: 1;
+            height: 1.5px;
+            background-color: #107c41;
+            max-width: 18px;
         }
         .sidebar-menu {
             list-style: none;
@@ -341,14 +360,19 @@
             <div id="sidebarBackdrop" class="sidebar-backdrop"></div>
             <!-- Sidebar -->
             <nav id="sidebar-wrapper" class="d-flex flex-column">
-                <!-- Brand / Logo matching ASM Enterprise -->
-                <div class="sidebar-brand text-center py-3">
-                    <a href="@Url.Action("Index", "Company")" class="text-decoration-none" title="Manage Company Profile">
-                        <div style="width: 48px; height: 48px; margin: 0 auto; background: linear-gradient(135deg, #0284c7, #0369a1); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 1.3rem; color: #fff; box-shadow: 0 4px 12px rgba(2,132,199,0.4); border: 2px solid rgba(255,255,255,0.2);">
-                            ASM
-                        </div>
-                        <div class="sidebar-brand-title mt-2 text-white" style="font-weight: 800; font-size: 1rem; letter-spacing: 0.5px;">ASM ENTERPRISE</div>
-                        <div class="sidebar-brand-sub" style="font-size: 0.72rem; opacity: 0.85; color: rgba(255,255,255,0.8);">Motlab Tower, Chowk Bazar, Dhaka</div>
+                <!-- Brand / Logo from Company Table -->
+                <div class="sidebar-brand text-center">
+                    <a href="@Url.Action("Index", "Company")" class="text-decoration-none d-block" title="Manage Company Profile">
+                        <svg width="58" height="58" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" style="display:block; margin:0 auto;">
+                            <circle cx="50" cy="50" r="47" fill="#1b3b6f" />
+                            <circle cx="50" cy="50" r="42" fill="none" stroke="#ffffff" stroke-width="1.5" stroke-opacity="0.85" />
+                            <circle cx="50" cy="50" r="28" fill="none" stroke="#ffffff" stroke-width="2" />
+                            <circle cx="15" cy="50" r="2.2" fill="#ffffff" />
+                            <circle cx="85" cy="50" r="2.2" fill="#ffffff" />
+                            <text x="50" y="56" text-anchor="middle" fill="#ffffff" font-family="Segoe UI, Arial, sans-serif" font-weight="900" font-size="22" letter-spacing="1">@activeCompany.CompanyCode</text>
+                        </svg>
+                        <div class="sidebar-brand-title">@activeCompany.CompanyName</div>
+                        <div class="sidebar-brand-sub">@activeCompany.Address</div>
                     </a>
                 </div>
 

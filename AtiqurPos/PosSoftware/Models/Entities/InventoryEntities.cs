@@ -107,6 +107,9 @@ namespace PosSoftware.Models.Entities
         [Column(TypeName = "decimal(18,2)")]
         public decimal SellingPrice { get; set; }
 
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal MRP { get; set; } = 0;
+
         public int CurrentStock { get; set; } = 0;
 
         public int MinAlertStock { get; set; } = 5;

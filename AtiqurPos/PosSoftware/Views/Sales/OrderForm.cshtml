@@ -1,6 +1,8 @@
 @model List<PosSoftware.Models.Entities.Product>
+@inject PosSoftware.Services.ICompanyService CompanyService
 @{
     Layout = null;
+    var company = await CompanyService.GetActiveCompanyAsync();
     int totalCount = Model.Count;
     int half = (int)Math.Ceiling(totalCount / 2.0);
     var leftItems = Model.Take(half).ToList();
@@ -15,7 +17,7 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>ASM ENTERPRISE - Order Form @(string.IsNullOrEmpty(selectedCatName) ? "" : $"({selectedCatName})")</title>
+    <title>@company.CompanyName - Order Form @(string.IsNullOrEmpty(selectedCatName) ? "" : $"({selectedCatName})")</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" />
     <style>
@@ -177,14 +179,28 @@
                 margin: 0mm !important;
                 padding: 0mm !important;
             }
+            html {
+                background: #fff !important;
+                margin: 0mm !important;
+                padding: 0mm !important;
+            }
+            body {
+                background: #fff !important;
+                margin: 0mm !important;
+                padding: 6mm !important;
+                box-sizing: border-box !important;
+            }
             .no-print-bar {
                 display: none !important;
             }
             .order-sheet {
-                border: none;
-                box-shadow: none;
+                border: 1.5px solid #000 !important;
+                box-shadow: none !important;
                 padding: 6mm 8mm !important;
+                min-height: 280mm !important;
                 max-width: 100%;
+                width: 100%;
+                box-sizing: border-box !important;
             }
             .qty-input {
                 outline: none;
@@ -236,8 +252,14 @@
     <div class="order-sheet">
         <!-- Header -->
         <div class="company-header">
-            <h1 class="company-name">ASM ENTERPRISE</h1>
-            <div class="company-address">Motlab Tower, Chowk Bazar, Dhaka-1211.</div>
+            <h1 class="company-name">@company.CompanyName</h1>
+            <div class="company-address">
+                @company.Address
+                @if (!string.IsNullOrWhiteSpace(company.Phone))
+                {
+                    <span> | Phone: @company.Phone</span>
+                }
+            </div>
             <div class="order-badge">Order Form</div>
         </div>
 
@@ -288,7 +310,7 @@
                                 <tr>
                                     <td class="col-sl">@slNo</td>
                                     <td class="col-name" title="@item.SKU">@item.Name</td>
-                                    <td class="col-price"></td>
+                                    <td class="col-price" data-price="@item.SellingPrice">@item.SellingPrice.ToString("N2")</td>
                                     <td class="col-qty">
                                         <input type="text" class="qty-input" data-sl="@slNo" oninput="calculateRow(this)" />
                                     </td>
@@ -329,7 +351,7 @@
                                 <tr>
                                     <td class="col-sl">@slNo</td>
                                     <td class="col-name" title="@item.SKU">@item.Name</td>
-                                    <td class="col-price"></td>
+                                    <td class="col-price" data-price="@item.SellingPrice">@item.SellingPrice.ToString("N2")</td>
                                     <td class="col-qty">
                                         <input type="text" class="qty-input" data-sl="@slNo" oninput="calculateRow(this)" />
                                     </td>
@@ -349,6 +371,13 @@
             <div class="sig-block">Sales Officer</div>
             <div class="sig-block">Delivered by</div>
             <div class="sig-block">Received by</div>
+        </div>
+
+        <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #94a3b8; margin-top: 10px; padding-top: 5px; font-size: 7.5pt; color: #333;">
+            <div>Printed Date : @DateTime.Now.ToString("MM/dd/yyyy, h:mm:ss tt")</div>
+            <div style="text-align: right;">
+                <b>@company.CompanyName</b> | Imported By: Sordar Enterprise
+            </div>
         </div>
     </div>
 
